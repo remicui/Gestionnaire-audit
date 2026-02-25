@@ -114,9 +114,10 @@
 <div id="app-shell">
     <div class="nav-bar no-print">
         <h1 style="margin:0; font-size:1.2em;">🛠 BECHAMEIL - Manager Audit</h1>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="showView('home')" style="background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">🏠 ACCUEIL</button>
-            <button onclick="logout()" style="background:rgba(255,0,0,0.2); border:1px solid white; color:white; padding:8px 15px; border-radius:4px; cursor:pointer;">🔒 QUITTER</button>
+        <div style="display: flex; gap: 8px;">
+            <button onclick="forceUpdate()" style="background:rgba(255,255,255,0.15); border:1px solid white; color:white; padding:8px 12px; border-radius:4px; cursor:pointer; font-size:0.8em;">🔄 MAJ</button>
+            <button onclick="showView('home')" style="background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">🏠 ACCUEIL</button>
+            <button onclick="logout()" style="background:rgba(255,0,0,0.2); border:1px solid white; color:white; padding:8px 12px; border-radius:4px; cursor:pointer;">🔒 QUITTER</button>
         </div>
     </div>
 
@@ -261,6 +262,13 @@
     function verifyCode() { if (document.getElementById('passCode').value === VALID_CODE) { localStorage.setItem('bechameil_auth_persistent', 'true'); unlockApp(); } else alert("Code erroné."); }
     function unlockApp() { document.getElementById('lock-screen').style.display = 'none'; document.getElementById('app-shell').style.display = 'block'; initApp(); }
     function logout() { localStorage.removeItem('bechameil_auth_persistent'); window.location.reload(); }
+
+    function forceUpdate() {
+        if(confirm("Vérifier les mises à jour sur GitHub ? (La page va se recharger)")) {
+            // Ajout d'un paramètre aléatoire pour forcer le téléchargement du nouveau fichier
+            window.location.href = window.location.pathname + '?v=' + Date.now();
+        }
+    }
 
     function initApp() { cleanHistory(); populateCpuBrands(); updateHistoryList(); initTooltips(); }
     function filterAudits() { const query = document.getElementById('auditSearch').value.toLowerCase(); document.querySelectorAll('.report-item').forEach(item => { item.style.display = item.innerText.toLowerCase().includes(query) ? 'flex' : 'none'; }); }
@@ -427,14 +435,12 @@
         addIORow(); addAxe(); addNewPhoto(); showView('form-view');
     }
 
-    // Export depuis le formulaire ouvert
     function exportAudit() {
         const id = document.getElementById('currentReportId').value;
         if(!id) return;
         exportAuditDirect(id);
     }
 
-    // Fonction d'exportation réutilisable
     function exportAuditDirect(id) {
         const dataString = localStorage.getItem(id);
         const data = JSON.parse(dataString);
