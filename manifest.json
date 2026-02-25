@@ -1,0 +1,16 @@
+{
+  "name": "BECHAMEIL Audit Manager",
+  "short_name": "Audit BECHAMEIL",
+  "description": "Plateforme d'Audit Technique BECHAMEIL",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1a3a5a",
+  "theme_color": "#1a3a5a",
+  "icons": [
+    {
+      "src": "Logo_.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
