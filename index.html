@@ -17,7 +17,6 @@
 
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background-color: #f4f7f9; color: var(--bleu-nuit-soft); line-height: 1.3; }
         
-        /* ÉCRAN DE VERROUILLAGE */
         #lock-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bleu-nuit-soft);
@@ -27,7 +26,7 @@
         .lock-card { background: white; padding: 30px; border-radius: 12px; text-align: center; color: var(--bleu-nuit-soft); box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 300px; }
         .lock-input { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid var(--bleu-fond); border-radius: 8px; font-size: 1.2em; text-align: center; box-sizing: border-box; }
         
-        #app-shell { max-width: 1050px; margin: 0 auto; padding: 10px; display: none; } /* Masqué par défaut */
+        #app-shell { max-width: 1050px; margin: 0 auto; padding: 10px; display: none; }
         
         .nav-bar { background: var(--bleu-nuit-soft); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 0 0 8px 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .view { display: none; }
@@ -35,7 +34,6 @@
         .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .btn-main { background: var(--bleu-nuit-soft); color: var(--jaune-bechameil); border: none; padding: 18px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 10px; font-size: 1.1em; text-transform: uppercase; }
         
-        /* BANNIÈRE ACCUEIL */
         .home-hero { 
             background: linear-gradient(135deg, var(--bleu-nuit-soft) 0%, var(--bleu-accent) 100%);
             padding: 50px 20px; border-radius: 12px; text-align: center; margin-bottom: 30px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
@@ -43,17 +41,13 @@
         .logo-container { background: white; display: inline-block; padding: 25px 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 25px; }
         .home-hero img { max-height: 130px; width: auto; display: block; }
         .home-hero h2 { background: transparent; color: var(--jaune-bechameil); justify-content: center; margin-top: 10px; font-size: 1.6em; letter-spacing: 1px; text-transform: uppercase; }
-        .home-hero h2::before { display: none; }
 
-        /* BARRE DE RECHERCHE */
         .search-container { position: relative; margin-bottom: 20px; }
         .search-input { width: 100%; padding: 12px 15px 12px 40px; border: 2px solid var(--bleu-fond); border-radius: 8px; font-size: 1em; box-sizing: border-box; }
         .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--bleu-accent); }
 
-        /* HISTORIQUE */
         .report-item { border-bottom: 1px solid var(--gris-clair); padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .report-info-main { font-size: 1.25em; font-weight: bold; color: #000; display: block; }
-        .report-info-sub { font-size: 0.85em; color: #666; display: block; }
 
         .page { background: var(--blanc); padding: 40px; box-shadow: 0 5px 15px rgba(26, 58, 90, 0.1); border-radius: 8px; border-top: 10px solid var(--jaune-bechameil); }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid var(--bleu-nuit-soft); padding-bottom: 20px; }
@@ -62,26 +56,42 @@
         .header-title h1 { margin: 0; color: var(--bleu-nuit-soft); font-size: 1.8em; text-transform: uppercase; }
         h2 { background: var(--bleu-nuit-soft); color: var(--jaune-bechameil); padding: 10px 15px; font-size: 1.1em; margin-top: 25px; border-radius: 4px; text-transform: uppercase; display: flex; align-items: center; }
         h2::before { content: "◆"; margin-right: 12px; }
-        .section { margin-bottom: 15px; }
+        
         label { font-weight: bold; display: inline-block; width: 230px; vertical-align: top; font-size: 0.95em; }
         input, select, textarea { padding: 7px; border: 1px solid var(--bleu-accent); border-radius: 4px; font-size: 16px; font-family: inherit; }
+        
         .io-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85em; }
         .io-table th, .io-table td { border: 1px solid var(--bleu-accent); padding: 5px; text-align: left; }
         .io-table th { background: var(--bleu-fond); }
+        
         .axe-container { border: 1px solid var(--bleu-accent); padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #fdfdfe; border-left: 8px solid var(--jaune-bechameil); position: relative; }
         .axe-title { font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid var(--bleu-fond); padding-bottom: 8px; font-size: 1.1em; color: var(--bleu-nuit-soft); }
         .grid-axe { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .grid-axe div { display: flex; align-items: center; font-size: 0.85em; }
         .grid-axe label { width: 130px; flex-shrink: 0; color: var(--bleu-accent); font-weight: bold; }
-        .pwr-summary { background: #eef2f7; border: 2px solid var(--jaune-bechameil); padding: 15px; border-radius: 5px; margin: 15px 0; font-weight: bold; text-align: center; }
+        
         .photo-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 15px; }
         .photo-item { border: 2px dashed var(--bleu-accent); min-height: 150px; display: flex; align-items: center; justify-content: center; background: #fafafa; border-radius: 5px; cursor: pointer; }
         .photo-item img { width: 100%; max-height: 500px; object-fit: contain; }
         .photo-wrapper { position: relative; margin-bottom: 20px; }
+        
         .btn-add { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-remove { background: #c0393b; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; }
         .tech-tooltip { position: absolute; background: #222; color: #fff; padding: 10px 14px; border-radius: 5px; font-size: 12.5px; z-index: 3000; max-width: 280px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); pointer-events: none; display: none; border-left: 5px solid var(--jaune-bechameil); line-height: 1.4; }
-        @media print { .no-print { display: none !important; } .page { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; border-top: 6px solid var(--jaune-bechameil) !important; } .cod-hidden, .io-hidden, .log-hidden { display: none !important; } }
+        
+        @media print { 
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body { background: white; }
+            .no-print, #saveMsg, .btn-remove, .btn-add { display: none !important; } 
+            .page { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important; border-top: 10px solid var(--jaune-bechameil) !important; } 
+            .axe-container { page-break-inside: avoid; break-inside: avoid; border: 1px solid var(--bleu-accent) !important; border-left: 8px solid var(--jaune-bechameil) !important; background: #fdfdfe !important; }
+            .photo-wrapper { page-break-inside: avoid; break-inside: avoid; }
+            h2 { background: var(--bleu-nuit-soft) !important; color: var(--jaune-bechameil) !important; page-break-after: avoid; padding: 10px 15px !important; border-radius: 4px !important; }
+            .io-table th { background: var(--bleu-fond) !important; }
+            input, select, textarea { border: 1px solid #eee !important; background: transparent !important; }
+            .cod-hidden, .io-hidden, .log-hidden { display: none !important; }
+        }
+
         .save-indicator { position: fixed; bottom: 20px; right: 20px; background: #27ae60; color: white; padding: 5px 15px; border-radius: 20px; display: none; z-index: 2000; }
         .cod-hidden, .io-hidden, .log-hidden { display: none !important; }
     </style>
@@ -93,7 +103,7 @@
     <div class="lock-card">
         <h3>Accès Sécurisé</h3>
         <p>Veuillez entrer le code d'accès</p>
-        <input type="password" id="passCode" class="lock-input" placeholder="****" maxlength="4">
+        <input type="password" id="passCode" class="lock-input" placeholder="****">
         <button class="btn-main" onclick="verifyCode()" style="margin-bottom:0;">Valider</button>
     </div>
 </div>
@@ -155,8 +165,7 @@
                 <div class="section">
                     <label>Date de l'Audit :</label> <input type="date" id="auditDate" style="width:200px"><br><br>
                     <label>Client / Site :</label> <input type="text" id="clientName" style="width:60%"><br><br>
-                    <label>Adresse :</label> <input type="text" id="clientAddress" style="width:60%" onchange="calculateRoute()" placeholder="N°, Rue, CP, Ville">
-                    <div id="trajet-info" class="no-print" style="font-size:0.85em; margin-left:235px; color:var(--bleu-accent); font-style:italic; margin-top:5px;">Calcul de distance...</div><br>
+                    <label>Adresse :</label> <input type="text" id="clientAddress" style="width:60%" placeholder="N°, Rue, CP, Ville"><br><br>
                     <label>Machine / Repère :</label> <input type="text" id="machineName" style="width:60%"><br><br>
                     <label>Chargé d'Affaires :</label> <input type="text" id="expertName" style="width:60%" value="Expert BECHAMEIL">
                 </div>
@@ -224,6 +233,7 @@
 
                 <div class="btn-container no-print" style="display:flex; gap:10px; margin-top:40px;">
                     <button type="button" style="background:#95a5a6; color:white; border:none; padding:20px; border-radius:5px; flex:1; cursor:pointer; font-weight:bold;" onclick="showView('home')">RETOUR ACCUEIL</button>
+                    <button type="button" style="background:#2c527a; color:white; border:none; padding:20px; border-radius:5px; flex:1; cursor:pointer; font-weight:bold;" onclick="exportAudit()">💾 EXPORTER JSON</button>
                     <button type="button" class="btn-main" style="flex:2; padding:20px;" onclick="window.print()">GÉNÉRER LE RAPPORT PDF</button>
                 </div>
             </form>
@@ -232,80 +242,225 @@
 </div>
 
 <script>
-    const VALID_CODE = "1234"; // MODIFIE LE CODE ICI
-
-    // FONCTION DE SÉCURITÉ
-    function checkLock() {
-        if (sessionStorage.getItem('bechameil_auth') === 'true') {
-            unlockApp();
-        }
-    }
-    function verifyCode() {
-        const input = document.getElementById('passCode').value;
-        if (input === VALID_CODE) {
-            sessionStorage.setItem('bechameil_auth', 'true');
-            unlockApp();
-        } else {
-            alert("Code erroné.");
-            document.getElementById('passCode').value = "";
-        }
-    }
-    function unlockApp() {
-        document.getElementById('lock-screen').style.display = 'none';
-        document.getElementById('app-shell').style.display = 'block';
-        initApp();
-    }
-    function logout() {
-        sessionStorage.removeItem('bechameil_auth');
-        window.location.reload();
-    }
-
-    // RESTE DU SCRIPT TECHNIQUE (IDENTIQUE)
-    const dbTechInfo = { "Siemens": "Leader mondial...", "Schneider / Téléméca": "Standard français...", "Rockwell / AB": "Haut de gamme...", "VIPA (Yaskawa)": "Totalement compatible Siemens S7...", "Omron": "Expert en motion control...", "S7-1500": "Actuel. Très puissant...", "S7-1200": "Actuel. Compact...", "S7-300": "OBSOLET...", "S7-400": "Process lourd...", "S5-95U/115U/135U": "CRITIQUE...", "M580": "Actuel...", "M340": "Actuel...", "Premium (TSX57)": "OBSOLET...", "Micro (TSX37)": "OBSOLET...", "SEW Eurodrive": "Référence mécanique...", "Movidrive MDX60/61B": "Haut de gamme SEW...", "Movitrac MC07B": "Compact...", "Altivar 320 / 630 / 930": "Gamme actuelle Schneider...", "Sinamics G120": "Modulaire...", "Wago 750 / 753": "Très modulaire..." };
-    const dbModelesVar = { "SEW Eurodrive": ["Movidrive MDX60/61B", "Movitrac MC07B", "Movitrac LTE-B", "Movimot"], "Schneider": ["Altivar 320 / 630 / 930", "Altivar 71 / 61", "Lexium 32"], "Siemens": ["Sinamics G120", "Micromaster 440", "Masterdrives"], "Danfoss": ["VLT FC302", "VLT 2800"], "Leroy Somer": ["Unidrive M", "Commander SK"], "Autre": ["Modèle spécifique"] };
-    const dbModelesCpu = { "Siemens": ["S7-1500", "S7-1200", "S7-300", "S7-400", "S5-95U/115U/135U", "Logo!"], "Schneider / Téléméca": ["M580", "M340", "M221", "Premium (TSX57)", "Micro (TSX37)", "Série 7 (TSX17/27/47)"], "Rockwell / AB": ["ControlLogix", "CompactLogix", "MicroLogix", "SLC 500", "PLC-5"], "VIPA (Yaskawa)": ["Série SLIO", "Série 300S (Compat. S7)", "Série 200V", "Série 100V", "Slot PLC"], "Omron": ["CJ1 / CJ2", "NX / NJ", "CPM1A / CQM1"], "Mitsubishi": ["Melsec Q / L", "Melsec FX", "iQ-R"], "April": ["SMC 50 / 600"], "B&R": ["X20", "APC"], "Beckhoff": ["CX (IPC)", "TwinCAT"], "Autre": ["Modèle spécifique"] };
-    const dbIo = { "Siemens ET200 (S/M/MP/SP)": { types: ["DI", "DO", "AI", "AO", "F-DI", "F-DO", "TM"], voies: ["4", "8", "16", "32", "2"] }, "Schneider STB / TM3 / TM2": { types: ["DI", "DO (Relais)", "DO (Transistor)", "AI", "AO", "Expert"], voies: ["2", "4", "8", "16", "32"] }, "Wago 750 / 753": { types: ["DI", "DO", "AI", "AO", "F-DI/DO", "Special"], voies: ["2", "4", "8", "16"] }, "Autre / Manuel": { types: ["DI", "DO", "AI", "AO", "Relais", "Safety"], voies: ["1", "2", "4", "8", "16", "32", "64"] } };
+    const VALID_CODE = "AuditBechameil58!";
     let photoCounter = 0;
+
+    const dbTechInfo = { 
+        "Siemens": "Leader mondial. Gammes ET200S, ET200SP, ET200MP...", 
+        "Schneider / Téléméca": "Standard français. Gammes Advantys STB, OTB, TM3...", 
+        "Rockwell / AB": "Haut de gamme. Gammes Point I/O, Flex I/O...", 
+        "VIPA (Yaskawa)": "Totalement compatible Siemens S7. Gamme SLIO...", 
+        "Wago": "Système modulaire 750/753 très répandu..."
+    };
     
+    const dbIOBrands = ["Siemens", "Schneider / Téléméca", "Wago", "Beckhoff", "Rockwell / AB", "Autre"];
+    const dbModelesVar = { "SEW Eurodrive": ["Movidrive MDX60/61B", "Movitrac MC07B", "Movitrac LTE-B", "Movimot"], "Schneider": ["Altivar 320 / 630 / 930", "Altivar 71 / 61"], "Siemens": ["Sinamics G120", "Micromaster 440"], "Autre": ["Modèle spécifique"] };
+    const dbModelesCpu = { "Siemens": ["S7-1500", "S7-1200", "S7-300", "S7-400", "S5-95U/115U/135U"], "Schneider / Téléméca": ["M580", "M340", "Premium (TSX57)", "Micro (TSX37)"], "Autre": ["Modèle spécifique"] };
+
+    function checkLock() { if (localStorage.getItem('bechameil_auth_persistent') === 'true') unlockApp(); }
+    function verifyCode() { if (document.getElementById('passCode').value === VALID_CODE) { localStorage.setItem('bechameil_auth_persistent', 'true'); unlockApp(); } else alert("Code erroné."); }
+    function unlockApp() { document.getElementById('lock-screen').style.display = 'none'; document.getElementById('app-shell').style.display = 'block'; initApp(); }
+    function logout() { localStorage.removeItem('bechameil_auth_persistent'); window.location.reload(); }
+
     function initApp() { cleanHistory(); populateCpuBrands(); updateHistoryList(); initTooltips(); }
     function filterAudits() { const query = document.getElementById('auditSearch').value.toLowerCase(); document.querySelectorAll('.report-item').forEach(item => { item.style.display = item.innerText.toLowerCase().includes(query) ? 'flex' : 'none'; }); }
-    function cleanHistory() { for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('audit_')) { const data = JSON.parse(localStorage.getItem(key)); if ((!data.machine || data.machine === "Machine non spécifiée" || data.machine === "undefined") && (!data.client || data.client === "Société Inconnue" || data.client === "undefined")) localStorage.removeItem(key); } } }
-    function initTooltips() { const tooltip = document.getElementById('tooltip'); document.addEventListener('mouseover', (e) => { if (e.target.classList.contains('has-tech-info') || e.target.id.includes('brand') || e.target.id.includes('model')) { const val = e.target.value; if (val && dbTechInfo[val]) { tooltip.innerHTML = `<strong>${val}</strong><br>${dbTechInfo[val]}`; tooltip.style.display = 'block'; } } }); document.addEventListener('mousemove', (e) => { if (tooltip.style.display === 'block') { tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px'; } }); document.addEventListener('mouseout', () => { tooltip.style.display = 'none'; }); }
-    function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id === 'home') { document.getElementById('auditSearch').value = ''; updateHistoryList(); } }
-    function createNewReport() { const type = document.getElementById('reportType').value; const id = 'audit_' + Date.now(); document.getElementById('auditForm').reset(); document.getElementById('currentReportId').value = id; document.getElementById('displayReportType').innerText = type; document.getElementById('axes-list').innerHTML = ''; document.getElementById('ioTable').querySelector('tbody').innerHTML = ''; document.getElementById('photoGrid').innerHTML = ''; document.getElementById('auditDate').value = new Date().toISOString().split('T')[0]; addIORow(); addAxe(); addNewPhoto(); showView('form-view'); saveCurrentReport(); }
-    function updateHistoryList() { const container = document.getElementById('historyList'); container.innerHTML = ''; const audits = []; for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key.startsWith('audit_')) audits.push(JSON.parse(localStorage.getItem(key))); } audits.sort((a,b) => b.timestamp - a.timestamp).forEach(a => { const dateObj = new Date(a.timestamp); const formattedDate = dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); const d = document.createElement('div'); d.className = 'report-item'; d.innerHTML = `<div style="flex:1;"><span class="report-info-main">${a.machine}</span><span style="color:#2c527a; font-weight:bold; font-size:0.95em;">🏢 ${a.client}</span><span class="report-info-sub">📅 ${formattedDate} | 📝 ${a.type}</span></div><div style="display:flex; gap:8px;"><button class="btn-add" style="background:var(--bleu-accent); padding: 8px 12px; font-size: 0.8em;" onclick="loadReport('${a.id}')">📂 OUVRIR</button><button class="btn-add" style="background:#34495e; padding: 8px 12px; font-size: 0.8em;" onclick="exportSingleAudit('${a.id}')">💾 EXPORT</button><button class="btn-remove" onclick="if(confirm('Supprimer ?')){localStorage.removeItem('${a.id}');updateHistoryList();}">❌</button></div>`; container.appendChild(d); }); }
-    function addAxe() { const list = document.getElementById('axes-list'); const idx = list.children.length; const div = document.createElement('div'); div.className = 'axe-container'; let brands = '<option value="">-- Marque --</option>'; Object.keys(dbModelesVar).sort().forEach(b => brands += `<option value="${b}">${b}</option>`); div.innerHTML = `<button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveCurrentReport();" style="position:absolute; top:15px; right:15px; padding:8px 12px; font-size:1.2em;">❌</button><div class="axe-title">AXE MOTEUR N°${idx + 1} : <input type="text" id="axe_name_${idx}" placeholder="Nom de l'axe" style="width:300px"></div><div class="grid-axe"><div><label>Marque Var. :</label> <select id="axe_brand_${idx}" class="has-tech-info" onchange="updateModelVarList(this); saveCurrentReport();" style="width:160px">${brands}</select></div><div><label>Modèle Var. :</label> <select id="axe_model_${idx}" class="has-tech-info" onchange="saveCurrentReport();" style="width:160px"><option value="">--</option></select></div><div><label>Référence Var. :</label> <input type="text" id="axe_ref_var_${idx}" style="width:160px"></div><div><label>Puissance :</label> <input type="text" id="axe_pwr_${idx}" class="pwr-input" oninput="calculateTotalPower();" placeholder="kW" style="width:80px"> &nbsp;kW</div><div style="grid-column: span 2; border-top: 1px solid #ddd; margin-top: 5px; padding-top: 10px;"><strong>Données Moteur :</strong></div><div><label>Type / Réf. :</label> <input type="text" id="axe_mot_ref_${idx}" style="width:160px"></div><div><label>Vitesse (tr/min) :</label> <input type="text" id="axe_mot_speed_${idx}" style="width:100px"></div><div><label>Intensité (A) :</label> <input type="text" id="axe_mot_amp_${idx}" placeholder="In" style="width:100px"></div><div><label>Tension (V) :</label> <input type="text" id="axe_mot_volt_${idx}" placeholder="ex: 230/400" style="width:100px"></div><div><label>Couplage :</label> <input type="text" id="axe_mot_coup_${idx}" placeholder="Etoile/Delta" style="width:100px"></div><div><label>Cos φ :</label> <input type="text" id="axe_mot_cos_${idx}" style="width:100px"></div><div style="grid-column: span 2; border-top: 1px solid #ddd; margin-top: 5px; padding-top: 10px;"><strong>Mécanique :</strong></div><div><label>Réducteur :</label> <input type="text" id="axe_red_ref_${idx}" placeholder="Réf. réducteur" style="width:160px"></div><div><label>Rapport (i) :</label> <input type="text" id="axe_red_ratio_${idx}" style="width:100px"></div><div><label>Fixation :</label> <input type="text" id="axe_red_fix_${idx}" placeholder="B5, B14, Arbre creux..." style="width:160px"></div><div><label>Frein :</label> <input type="checkbox" id="axe_fr_non_${idx}"> Non | <input type="checkbox" id="axe_fr_oui_${idx}"> Oui</div><div style="grid-column: span 2; border-top: 1px solid #ddd; margin-top: 5px; padding-top: 10px;"><strong>Codeur :</strong></div><div><label>Présence :</label> <input type="checkbox" id="axe_cod_non_${idx}" onclick="document.getElementById('axe_cod_oui_${idx}').checked=false; toggleEncoderFields(document.getElementById('axe_cod_oui_${idx}'))"> Non | <input type="checkbox" id="axe_cod_oui_${idx}" onclick="document.getElementById('axe_cod_non_${idx}').checked=false; toggleEncoderFields(this)"> Oui</div><div class="cod-row-${idx} cod-hidden"><label>Réf Codeur :</label> <input type="text" id="axe_cod_ref_${idx}" style="width:160px"></div><div class="cod-row-${idx} cod-hidden"><label>Type Codeur :</label> <input type="text" id="axe_cod_type_${idx}" placeholder="TTL, HTL, SinCos..." style="width:160px"></div><div class="cod-row-${idx} cod-hidden"><label>Résolution :</label> <input type="text" id="axe_cod_res_${idx}" placeholder="pts/tour" style="width:100px"></div></div>`; list.appendChild(div); }
-    function saveCurrentReport() { const id = document.getElementById('currentReportId').value; if(!id) return; const photosData = []; document.querySelectorAll('.photo-wrapper img').forEach(img => photosData.push(img.src)); const data = { id: id, type: document.getElementById('displayReportType').innerText, timestamp: Date.now(), client: document.getElementById('clientName').value || "Société Inconnue", machine: document.getElementById('machineName').value || "Machine non spécifiée", auditDate: document.getElementById('auditDate').value, inputs: Array.from(document.querySelectorAll('input:not([type="file"]), select')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })), notes: document.getElementById('notesGen').value, ioCount: document.querySelector('#ioTable tbody').rows.length, axeCount: document.querySelectorAll('.axe-container').length, photos: photosData }; localStorage.setItem(id, JSON.stringify(data)); calculateTotalPower(); showSaveIndicator(); }
-    function loadReport(id) { const data = JSON.parse(localStorage.getItem(id)); document.getElementById('currentReportId').value = id; document.getElementById('displayReportType').innerText = data.type; document.querySelector('#ioTable tbody').innerHTML = ''; for(let i=0; i<data.ioCount; i++) addIORow(); document.getElementById('axes-list').innerHTML = ''; for(let i=0; i<data.axeCount; i++) addAxe(); const grid = document.getElementById('photoGrid'); grid.innerHTML = ''; if(data.photos) { data.photos.forEach(src => { photoCounter++; const div = document.createElement('div'); div.className = 'photo-wrapper'; div.innerHTML = `<div class="photo-item" id="p_item_${photoCounter}" onclick="if(event.target.tagName!='BUTTON') document.getElementById('img_${photoCounter}').click()"><img src="${src}"><input type="file" id="img_${photoCounter}" accept="image/*" style="display:none" onchange="previewImg(this, ${photoCounter})"></div><button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveCurrentReport();" style="position:absolute; top:10px; right:10px;">❌</button>`; grid.appendChild(div); }); } data.inputs.forEach(item => { const el = document.getElementById(item.id); if(el) { if(el.type === 'checkbox' || el.type === 'radio') el.checked = item.val; else el.value = item.val; if(el.id === 'cpuBrand') updateCpuModels(); if(el.id.startsWith('axe_brand_')) updateModelVarList(el); if(el.id.startsWith('axe_cod_oui_')) toggleEncoderFields(el); if(el.id === 'io_dep_oui') toggleIoFields(el); if(el.id === 'log_elec_oui') toggleLogFields(el, 'log_elec_data'); if(el.id === 'log_meca_oui') toggleLogFields(el, 'log_meca_data'); if(el.id.startsWith('io_brand_')) updateIoDetails(el); } }); document.getElementById('notesGen').value = data.notes; showView('form-view'); calculateTotalPower(); }
-    function updateModelVarList(sel) { const idx = sel.id.split('_').pop(); const m = document.getElementById(`axe_model_${idx}`); m.innerHTML = '<option value="">-- Modèle --</option>'; if(dbModelesVar[sel.value]) dbModelesVar[sel.value].forEach(mod => m.innerHTML += `<option value="${mod}">${mod}</option>`); }
-    function exportSingleAudit(id) { const data = localStorage.getItem(id); const audit = JSON.parse(data); const blob = new Blob([data], {type: "application/json"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `Audit_${audit.machine.replace(/\s+/g, '_')}.json`; a.click(); }
-    function populateCpuBrands() { const s = document.getElementById('cpuBrand'); let h = '<option value="">-- Choisir marque --</option>'; Object.keys(dbModelesCpu).sort().forEach(b => h += `<option value="${b}">${b}</option>`); s.innerHTML = h; }
-    function updateCpuModels() { const b = document.getElementById('cpuBrand').value; const m = document.getElementById('cpuModel'); m.innerHTML = '<option value="">-- Modèle --</option>'; if(dbModelesCpu[b]) dbModelesCpu[b].forEach(mod => m.innerHTML += `<option value="${mod}">${mod}</option>`); }
-    function addIORow() { const tbody = document.querySelector('#ioTable tbody'); const idx = tbody.rows.length; const row = tbody.insertRow(); let brandOptions = '<option value="">-- Marque --</option>'; Object.keys(dbIo).forEach(b => brandOptions += `<option value="${b}">${b}</option>`); row.innerHTML = `<td><select id="io_brand_${idx}" class="has-tech-info" style="width:100%" onchange="updateIoDetails(this); saveCurrentReport();">${brandOptions}</select></td><td><select id="io_type_${idx}" style="width:100%" onchange="saveCurrentReport();"><option value="">--</option></select></td><td><input type="text" id="io_ref_${idx}" style="width:100%" placeholder="Réf."></td><td><select id="io_qty_${idx}" style="width:100%" onchange="saveCurrentReport();"><option value="">--</option></select></td><td class="no-print"><button type="button" class="btn-remove" onclick="this.parentElement.parentElement.remove(); saveCurrentReport();">❌</button></td>`; }
-    function updateIoDetails(sel) { const idx = sel.id.split('_').pop(); const brand = sel.value; const typeSelect = document.getElementById(`io_type_${idx}`); const qtySelect = document.getElementById(`io_qty_${idx}`); typeSelect.innerHTML = '<option value="">--</option>'; qtySelect.innerHTML = '<option value="">--</option>'; if(dbIo[brand]) { dbIo[brand].types.forEach(t => typeSelect.innerHTML += `<option value="${t}">${t}</option>`); dbIo[brand].voies.forEach(v => qtySelect.innerHTML += `<option value="${v}">${v} voies</option>`); } }
-    function toggleEncoderFields(cb) { const idx = cb.id.split('_').pop(); document.querySelectorAll(`.cod-row-${idx}`).forEach(r => cb.checked ? r.classList.remove('cod-hidden') : r.classList.add('cod-hidden')); }
-    function toggleIoFields(cb) { const container = document.getElementById('io_nb_container'); if(cb.checked) container.classList.remove('io-hidden'); else container.classList.add('io-hidden'); }
-    function toggleLogFields(cb, targetId) { const el = document.getElementById(targetId); if(cb.checked) el.classList.remove('log-hidden'); else el.classList.add('log-hidden'); }
-    function addNewPhoto() { photoCounter++; const grid = document.getElementById('photoGrid'); const div = document.createElement('div'); div.className = 'photo-wrapper'; div.innerHTML = `<div class="photo-item" id="p_item_${photoCounter}" onclick="if(event.target.tagName!='BUTTON') document.getElementById('img_${photoCounter}').click()"><span>📸 Ajouter une photo</span><input type="file" id="img_${photoCounter}" style="display:none" onchange="previewImg(this, ${photoCounter})"></div><button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveCurrentReport();" style="position:absolute; top:10px; right:10px;">❌</button>`; grid.appendChild(div); }
-    function previewImg(input, id) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = e => { document.getElementById(`p_item_${id}`).innerHTML = `<img src="${e.target.result}"><input type="file" id="img_${id}" style="display:none" onchange="previewImg(this, ${id})">`; saveCurrentReport(); }; reader.readAsDataURL(input.files[0]); } }
-    function calculateTotalPower() { let total = 0; document.querySelectorAll('.pwr-input').forEach(i => { let v = parseFloat(i.value.replace(',', '.')); if(!isNaN(v)) total += v; }); let el = document.getElementById('totalKw'); if(el) el.innerText = total.toFixed(1); }
-    function showSaveIndicator() { const m = document.getElementById('saveMsg'); m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 1000); }
-    function importAudit(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = e => { try { const d = JSON.parse(e.target.result); localStorage.setItem(d.id, e.target.result); updateHistoryList(); alert("✅ Import réussi"); } catch(err){alert("❌ Erreur");} }; reader.readAsText(input.files[0]); } }
-    async function calculateRoute() { const dest = document.getElementById('clientAddress').value; if (!dest) return; try { const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dest)}`); const data = await res.json(); if (data[0]) { const route = await fetch(`https://router.project-osrm.org/route/v1/driving/2.9248,47.4103;${data[0].lon},${data[0].lat}?overview=false`); const rData = await route.json(); document.getElementById('trajet-info').innerHTML = `📍 Distance : <strong>${(rData.routes[0].distance/1000).toFixed(1)} km</strong>`; } } catch(e){} }
+    function cleanHistory() { for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && key.startsWith('audit_')) { const data = JSON.parse(localStorage.getItem(key)); if (!data.machine || data.machine === "Machine non spécifiée") localStorage.removeItem(key); } } }
+    
+    function initTooltips() { 
+        const tooltip = document.getElementById('tooltip'); 
+        document.addEventListener('mouseover', (e) => { 
+            if (e.target.classList.contains('has-tech-info') || e.target.tagName === 'SELECT') { 
+                const val = e.target.value; 
+                if (val && dbTechInfo[val]) { tooltip.innerHTML = `<strong>${val}</strong><br>${dbTechInfo[val]}`; tooltip.style.display = 'block'; } 
+            } 
+        }); 
+        document.addEventListener('mousemove', (e) => { if (tooltip.style.display === 'block') { tooltip.style.left = (e.pageX + 15) + 'px'; tooltip.style.top = (e.pageY + 15) + 'px'; } }); 
+        document.addEventListener('mouseout', () => { tooltip.style.display = 'none'; }); 
+    }
 
-    // ACTIVATION MODE OFFLINE (PWA)
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Mode Offline Actif'))
-                .catch(err => console.log('Erreur SW', err));
+    function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id === 'home') updateHistoryList(); }
+
+    function updateHistoryList() {
+        const container = document.getElementById('historyList'); container.innerHTML = '';
+        const audits = [];
+        for (let i = 0; i < localStorage.length; i++) { if (localStorage.key(i).startsWith('audit_')) audits.push(JSON.parse(localStorage.getItem(localStorage.key(i)))); }
+        audits.sort((a,b) => b.timestamp - a.timestamp).forEach(a => {
+            const d = document.createElement('div');
+            d.className = 'report-item';
+            d.innerHTML = `<div style="flex:1;"><span class="report-info-main">${a.machine}</span><span style="color:#2c527a; font-weight:bold;">🏢 ${a.client}</span></div>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-add" style="background:var(--bleu-accent); padding:8px 12px; font-size:0.8em;" onclick="loadReport('${a.id}')">📂 OUVRIR</button>
+                <button class="btn-add" style="background:#2c527a; padding:8px 12px; font-size:0.8em;" onclick="exportAuditDirect('${a.id}')">💾 EXPORT</button>
+                <button class="btn-remove" onclick="if(confirm('Supprimer ?')){localStorage.removeItem('${a.id}');updateHistoryList();}">❌</button>
+            </div>`;
+            container.appendChild(d);
         });
     }
 
-    // Gestion de la touche "Entrée" pour le code
-    document.getElementById('passCode').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') verifyCode();
-    });
+    function addAxe() {
+        const list = document.getElementById('axes-list');
+        const idx = list.children.length;
+        const div = document.createElement('div');
+        div.className = 'axe-container';
+        div.innerHTML = `<button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveCurrentReport();" style="position:absolute; top:15px; right:15px;">❌</button>
+            <div class="axe-title">AXE MOTEUR N°${idx + 1} : <input type="text" id="axe_name_${idx}" placeholder="Nom de l'axe" style="width:300px"></div>
+            <div class="grid-axe">
+                <div><label>Marque Var. :</label> <select id="axe_brand_${idx}" onchange="updateModelVarList(this); saveCurrentReport();"><option value="">--</option>${Object.keys(dbModelesVar).map(b=>`<option value="${b}">${b}</option>`).join('')}</select></div>
+                <div><label>Modèle Var. :</label> <select id="axe_model_${idx}"><option value="">--</option></select></div>
+                <div><label>Référence Var. :</label> <input type="text" id="axe_ref_var_${idx}" style="width:160px"></div>
+                <div><label>Puissance :</label> <input type="text" id="axe_pwr_${idx}" placeholder="kW" style="width:80px"> &nbsp;kW</div>
+                <div style="grid-column: span 2; border-top: 1px solid #ddd; margin-top: 5px; padding-top: 10px;"><strong>Données Moteur :</strong></div>
+                <div><label>Type / Réf. :</label> <input type="text" id="axe_mot_ref_${idx}" style="width:160px"></div>
+                <div><label>Vitesse (tr/min) :</label> <input type="text" id="axe_mot_speed_${idx}" style="width:100px"></div>
+                <div><label>Intensité (A) :</label> <input type="text" id="axe_mot_amp_${idx}" placeholder="In" style="width:100px"></div>
+                <div><label>Tension (V) :</label> <input type="text" id="axe_mot_volt_${idx}" placeholder="400V" style="width:100px"></div>
+                <div><label>Couplage :</label> <input type="text" id="axe_mot_coup_${idx}" placeholder="Δ/Y" style="width:100px"></div>
+                <div><label>Cos φ :</label> <input type="text" id="axe_mot_cos_${idx}" style="width:100px"></div>
+                <div style="grid-column: span 2; border-top: 1px solid #ddd; margin-top: 5px; padding-top: 10px;"><strong>Mécanique :</strong></div>
+                <div><label>Réducteur :</label> <input type="text" id="axe_red_ref_${idx}" style="width:160px"></div>
+                <div><label>Rapport (i) :</label> <input type="text" id="axe_red_ratio_${idx}" style="width:100px"></div>
+                <div><label>Frein :</label> <input type="checkbox" id="axe_fr_non_${idx}"> Non | <input type="checkbox" id="axe_fr_oui_${idx}"> Oui</div>
+                <div style="grid-column: span 2; border-top: 1px solid #ddd; margin-top: 5px; padding-top: 10px;"><strong>Codeur :</strong></div>
+                <div><label>Présence :</label> <input type="checkbox" id="axe_cod_non_${idx}" onclick="document.getElementById('axe_cod_oui_${idx}').checked=false; toggleEncoderFields(document.getElementById('axe_cod_oui_${idx}'), ${idx})"> Non | <input type="checkbox" id="axe_cod_oui_${idx}" onclick="document.getElementById('axe_cod_non_${idx}').checked=false; toggleEncoderFields(this, ${idx})"> Oui</div>
+                <div class="cod-row-${idx} cod-hidden" style="grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;">
+                    <div><label>Type Codeur :</label> <input type="text" id="axe_cod_type_${idx}" placeholder="Incrémental / SSI / SinCos" style="width:160px"></div>
+                    <div><label>Réf. Codeur :</label> <input type="text" id="axe_cod_ref_${idx}" style="width:160px"></div>
+                    <div><label>Résolution :</label> <input type="text" id="axe_cod_res_${idx}" placeholder="ex: 1024 ppr" style="width:160px"></div>
+                    <div><label>Alim (V) :</label> <input type="text" id="axe_cod_volt_${idx}" placeholder="5V / 24V" style="width:100px"></div>
+                </div>
+            </div>`;
+        list.appendChild(div);
+    }
+
+    function updateModelVarList(sel) {
+        const brand = sel.value; const modelSel = document.getElementById(sel.id.replace('brand', 'model'));
+        modelSel.innerHTML = '<option value="">--</option>';
+        if(dbModelesVar[brand]) dbModelesVar[brand].forEach(m => modelSel.innerHTML += `<option value="${m}">${m}</option>`);
+    }
+
+    function toggleEncoderFields(cb, idx) { document.querySelectorAll('.cod-row-'+idx).forEach(el => el.classList.toggle('cod-hidden', !cb.checked)); }
+    function toggleIoFields(cb) { document.getElementById('io_nb_container').classList.toggle('io-hidden', !cb.checked); }
+    function toggleLogFields(cb, targetId) { document.getElementById(targetId).classList.toggle('log-hidden', !cb.checked); }
+
+    function addNewPhoto(src = null) {
+        photoCounter++;
+        const grid = document.getElementById('photoGrid');
+        const div = document.createElement('div');
+        div.className = 'photo-wrapper';
+        div.innerHTML = `<div class="photo-item" id="p_item_${photoCounter}" onclick="document.getElementById('img_${photoCounter}').click()">
+            <span id="txt_${photoCounter}" style="${src ? 'display:none' : ''}">📸 Cliquez pour ajouter</span>
+            <img id="prev_${photoCounter}" src="${src || ''}" style="${src ? 'display:block' : 'display:none'}">
+            <input type="file" id="img_${photoCounter}" accept="image/*" style="display:none" onchange="previewImg(this, ${photoCounter})">
+        </div><button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveCurrentReport();" style="position:absolute; top:10px; right:10px;">❌</button>`;
+        grid.appendChild(div);
+    }
+
+    function previewImg(input, id) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('prev_'+id).src = compressedData;
+                    document.getElementById('prev_'+id).style.display = 'block';
+                    document.getElementById('txt_'+id).style.display = 'none';
+                    saveCurrentReport();
+                };
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function addIORow() {
+        const tbody = document.getElementById('ioTable').querySelector('tbody');
+        const row = tbody.insertRow();
+        row.innerHTML = `<td><select style="width:95%">${dbIOBrands.map(b=>`<option value="${b}">${b}</option>`).join('')}</select></td><td><input type="text" style="width:90%"></td><td><input type="text" style="width:90%"></td><td><input type="text" style="width:90%"></td><td class="no-print"><button type="button" class="btn-remove" onclick="this.parentElement.parentElement.remove(); saveCurrentReport();">❌</button></td>`;
+    }
+
+    function saveCurrentReport() {
+        const id = document.getElementById('currentReportId').value; if(!id) return;
+        const photosData = []; 
+        document.querySelectorAll('.photo-wrapper img').forEach(img => { if(img.src && img.src.startsWith('data:')) photosData.push(img.src); });
+        const data = {
+            id: id, type: document.getElementById('displayReportType').innerText, timestamp: Date.now(),
+            client: document.getElementById('clientName').value || "Société Inconnue",
+            machine: document.getElementById('machineName').value || "Machine non spécifiée",
+            inputs: Array.from(document.querySelectorAll('input:not([type="file"]), select, textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
+            axeCount: document.querySelectorAll('.axe-container').length,
+            ioCount: document.querySelector('#ioTable tbody').rows.length,
+            photos: photosData
+        };
+        localStorage.setItem(id, JSON.stringify(data));
+        showSaveIndicator();
+    }
+
+    function loadReport(id) {
+        const data = JSON.parse(localStorage.getItem(id));
+        document.getElementById('currentReportId').value = id;
+        document.getElementById('displayReportType').innerText = data.type;
+        document.getElementById('axes-list').innerHTML = ''; for(let i=0; i<data.axeCount; i++) addAxe();
+        document.querySelector('#ioTable tbody').innerHTML = ''; for(let i=0; i<data.ioCount; i++) addIORow();
+        document.getElementById('photoGrid').innerHTML = '';
+        if(data.photos) data.photos.forEach(pSrc => addNewPhoto(pSrc));
+        data.inputs.forEach(item => { const el = document.getElementById(item.id); if(el) { if(el.type === 'checkbox' || el.type === 'radio') el.checked = item.val; else el.value = item.val; } });
+        showView('form-view');
+    }
+
+    function createNewReport() {
+        const id = 'audit_' + Date.now();
+        document.getElementById('auditForm').reset();
+        document.getElementById('currentReportId').value = id;
+        document.getElementById('displayReportType').innerText = document.getElementById('reportType').value;
+        document.getElementById('axes-list').innerHTML = '';
+        document.getElementById('ioTable').querySelector('tbody').innerHTML = '';
+        document.getElementById('photoGrid').innerHTML = '';
+        document.getElementById('auditDate').value = new Date().toISOString().split('T')[0];
+        addIORow(); addAxe(); addNewPhoto(); showView('form-view');
+    }
+
+    // Export depuis le formulaire ouvert
+    function exportAudit() {
+        const id = document.getElementById('currentReportId').value;
+        if(!id) return;
+        exportAuditDirect(id);
+    }
+
+    // Fonction d'exportation réutilisable
+    function exportAuditDirect(id) {
+        const dataString = localStorage.getItem(id);
+        const data = JSON.parse(dataString);
+        const blob = new Blob([dataString], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Audit_${data.machine || 'SansNom'}.json`;
+        a.click();
+    }
+
+    function importAudit(input) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = JSON.parse(e.target.result);
+            localStorage.setItem(data.id, e.target.result);
+            updateHistoryList();
+            alert("Rapport importé avec succès !");
+        };
+        reader.readAsText(file);
+    }
+
+    function populateCpuBrands() { const sel = document.getElementById('cpuBrand'); sel.innerHTML = '<option value="">-- Choisir --</option>'; Object.keys(dbModelesCpu).forEach(b => sel.innerHTML += `<option value="${b}">${b}</option>`); }
+    function updateCpuModels() { const brand = document.getElementById('cpuBrand').value; const sel = document.getElementById('cpuModel'); sel.innerHTML = '<option value="">-- Modèle --</option>'; if(dbModelesCpu[brand]) dbModelesCpu[brand].forEach(m => sel.innerHTML += `<option value="${m}">${m}</option>`); }
+    function showSaveIndicator() { const s = document.getElementById('saveMsg'); s.style.display='block'; setTimeout(()=>s.style.display='none', 1000); }
 </script>
 </body>
 </html>
