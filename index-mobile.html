@@ -949,7 +949,7 @@
     async function generateYaskawaPdfBlob() {
         const docEl = document.querySelector('#yaskawa-view .yaskawa-doc');
         const canvas = await html2canvas(docEl, {
-            scale: 2, backgroundColor: '#ffffff', useCORS: true,
+            scale: 1.5, backgroundColor: '#ffffff', useCORS: true,
             onclone: (clonedDoc) => {
                 // Nettoyage propre pour le PDF final : pas de cadre visible autour de la signature,
                 // pas d'icônes natives horloge/calendrier, pas de bordures d'input, et masquage
@@ -1002,13 +1002,18 @@
             return;
         }
 
-        // 1) Partage natif (mobile) : ouvre le sélecteur d'apps avec le PDF DÉJÀ joint, sans texte pré-rempli
+        // 1) Partage natif (mobile) : ouvre le sélecteur d'apps avec le PDF DÉJÀ joint, sans texte pré-rempli.
+        //    On tente le partage directement (sans se fier uniquement à canShare, qui répond parfois
+        //    incorrectement sur certains navigateurs comme Samsung Internet).
         try {
             const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+            const canShareFiles = !!(navigator.canShare && navigator.canShare({ files: [pdfFile] }));
+            if (navigator.share) {
                 await navigator.share({ files: [pdfFile], title: subject });
                 if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
                 return;
+            } else {
+                console.warn('navigator.share indisponible sur ce navigateur (canShareFiles=' + canShareFiles + ')');
             }
         } catch (err) {
             if (err && err.name === 'AbortError') {
@@ -1016,8 +1021,14 @@
                 if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
                 return;
             }
-            console.warn('Partage natif indisponible, repli sur téléchargement + mail :', err);
+            console.warn('Partage natif en échec, repli sur téléchargement + mail :', err);
         }
+
+        const isSamsungInternet = /SamsungBrowser/i.test(navigator.userAgent);
+        const suggestion = isSamsungInternet
+            ? "\n\nAstuce : le navigateur \"Internet\" de Samsung gère mal le partage de fichiers. Essayez d'installer Google Chrome (Play Store) et d'ouvrir cette page avec, ou d'utiliser le bouton \"GÉNÉRER LE RAPPORT PDF\" puis de joindre le fichier vous-même."
+            : '';
+        alert("Le partage automatique avec fichier joint n'est pas pris en charge par ce navigateur. Le PDF va être téléchargé — joignez-le manuellement au message qui va s'ouvrir." + suggestion);
 
         // 2) Repli (partage natif absent ou en échec) : on télécharge le PDF PUIS on ouvre la
         //    messagerie, avec seulement l'objet prérempli, sans corps de message. Le téléchargement
