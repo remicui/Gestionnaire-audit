@@ -588,7 +588,20 @@
                         changed = true;
                     }
                 } else {
-                    const remoteJson = JSON.stringify(change.doc.data());
+                    // On préserve les photos déjà présentes en local (elles ne sont jamais envoyées
+                    // dans le cloud, voir cloudSave), pour ne pas les effacer lors de la réception
+                    // d'une mise à jour distante du même rapport.
+                    const remoteData = change.doc.data();
+                    const existingRaw = localStorage.getItem(change.doc.id);
+                    if (existingRaw) {
+                        try {
+                            const existing = JSON.parse(existingRaw);
+                            if (Array.isArray(existing.photos) && existing.photos.length > 0 && (!remoteData.photos || remoteData.photos.length === 0)) {
+                                remoteData.photos = existing.photos;
+                            }
+                        } catch (e) { /* ignore */ }
+                    }
+                    const remoteJson = JSON.stringify(remoteData);
                     if (localStorage.getItem(change.doc.id) !== remoteJson) {
                         localStorage.setItem(change.doc.id, remoteJson);
                         changed = true;
@@ -605,16 +618,24 @@
     }
 
     // Écriture cloud différée (debounce) : évite d'envoyer une requête à chaque frappe clavier.
+    // Les photos ne sont PAS envoyées dans le cloud (nécessiterait Firebase Storage, payant) :
+    // elles restent disponibles uniquement sur l'appareil où elles ont été prises/ajoutées.
+    // Le reste de la fiche (client, machine, dates, tableaux...) se synchronise normalement.
     function cloudSave(id, data) {
         if (!fbDb) return;
         clearTimeout(cloudSaveTimers[id]);
         cloudSaveTimers[id] = setTimeout(() => {
-            const json = JSON.stringify(data);
+            const cloudData = Object.assign({}, data);
+            if (Array.isArray(cloudData.photos) && cloudData.photos.length > 0) {
+                cloudData.photos = [];
+                cloudData.photosNote = 'Photos disponibles uniquement sur l\'appareil où la fiche a été créée.';
+            }
+            const json = JSON.stringify(cloudData);
             if (json.length > 900000) {
-                console.warn('Fiche trop volumineuse pour la synchronisation cloud (trop de photos ?) :', id);
+                console.warn('Fiche trop volumineuse pour la synchronisation cloud :', id);
                 return;
             }
-            fbDb.collection('fiches').doc(id).set(data).catch((err) => {
+            fbDb.collection('fiches').doc(id).set(cloudData).catch((err) => {
                 console.warn('Sauvegarde cloud impossible (reste enregistré en local) :', err.message || err);
             });
         }, 1500);
