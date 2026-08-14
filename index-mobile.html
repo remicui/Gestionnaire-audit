@@ -987,26 +987,23 @@
         if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Génération du PDF...'; }
 
         try {
-            const { ficheNum, client, body } = buildYaskawaEmailText();
+            const { ficheNum, client } = buildYaskawaEmailText();
             const subject = `Fiche d'intervention YASKAWA N° ${ficheNum}${client ? ' - ' + client : ''}`;
             const fileName = `Fiche_Intervention_YASKAWA_${ficheNum}.pdf`;
             const pdfBlob = await generateYaskawaPdfBlob();
             const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
-            // 1) Partage natif (mobile) : ouvre le sélecteur d'apps avec le PDF DÉJÀ joint
+            // 1) Partage natif (mobile) : ouvre le sélecteur d'apps avec le PDF DÉJÀ joint, sans texte pré-rempli
             if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
                 await navigator.share({
                     files: [pdfFile],
-                    title: subject,
-                    text: body
+                    title: subject
                 });
                 return;
             }
 
-            // 2) Repli (ordinateur / navigateur sans partage natif) : on télécharge le PDF et on
-            //    affiche objet + texte à copier-coller. On n'ouvre JAMAIS mailto: automatiquement
-            //    ici : sur certains PC, le nouveau client Outlook tente alors d'auto-joindre le
-            //    dernier fichier téléchargé et le reçoit vide/corrompu.
+            // 2) Repli : partage natif indisponible -> on télécharge le PDF puis on ouvre directement
+            //    la messagerie (comme avant), avec seulement l'objet prérempli, sans corps de message.
             const url = URL.createObjectURL(pdfBlob);
             const a = document.createElement('a');
             a.href = url;
@@ -1016,17 +1013,17 @@
             document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 15000);
 
-            showEmailReadyBanner(subject, body, fileName);
+            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}`;
+            setTimeout(() => { window.location.href = mailtoUrl; }, 600);
         } catch (err) {
             if (err && err.name === 'AbortError') {
                 // L'utilisateur a annulé le partage : rien à faire
             } else {
-                // La génération du PDF a échoué (ex : image bloquée par le navigateur en mode fichier local)
-                console.warn('Génération PDF impossible, repli sur le résumé texte :', err);
-                const { ficheNum, client, body } = buildYaskawaEmailText();
+                console.warn('Génération PDF impossible :', err);
+                const { ficheNum, client } = buildYaskawaEmailText();
                 const subject = `Fiche d'intervention YASKAWA N° ${ficheNum}${client ? ' - ' + client : ''}`;
-                const bodyWithNote = `${body}\n\nNote : le PDF n'a pas pu être généré automatiquement sur cet appareil. Utilisez le bouton "GÉNÉRER LE RAPPORT PDF" pour l'enregistrer, puis joignez-le manuellement à cet e-mail.`;
-                showEmailReadyBanner(subject, bodyWithNote, '(à générer via le bouton PDF)');
+                const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}`;
+                window.location.href = mailtoUrl;
             }
         } finally {
             if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
