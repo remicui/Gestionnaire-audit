@@ -104,7 +104,7 @@
 
         /* ---------- FICHE D'INTERVENTION YASKAWA (réplique fidèle du PDF, format A4) ---------- */
         .yaskawa-a4-wrapper { width: 210mm; max-width: 100%; margin: 0 auto; background: var(--blanc); padding: 8mm; box-sizing: border-box; box-shadow: 0 5px 15px rgba(26,58,90,0.1); border-radius: 4px; }
-        .yaskawa-doc { border: 2px solid #000; overflow: hidden; }
+        .yaskawa-doc { border: 2px solid #000; overflow: hidden; color: #000; }
         .y-header { display: flex; border-bottom: 2px solid #000; align-items: stretch; overflow: hidden; }
         .y-logo-cell { padding: 10px 20px; display: flex; align-items: center; justify-content: center; border-right: 2px solid #000; overflow: hidden; min-height: 70px; box-sizing: border-box; }
         .y-logo { max-height: 60px; max-width: 150px; width: auto; height: auto; display: block; object-fit: contain; }
@@ -748,8 +748,8 @@
                                     <td colspan="3">début : <input type="time" id="g_pause_debut" style="width:120px;"> &nbsp;&nbsp; fin : <input type="time" id="g_pause_fin" style="width:120px;"></td>
                                 </tr>
                                 <tr>
-                                    <td class="y-label" style="vertical-align:top;">Marque, modèle, type et références machine(s)</td>
-                                    <td colspan="3" style="vertical-align:top;"><textarea id="g_machines" rows="2"></textarea></td>
+                                    <td class="y-label">Marque, modèle, type et références machine(s)</td>
+                                    <td colspan="3"><textarea id="g_machines" rows="2"></textarea></td>
                                 </tr>
                             </table>
 
