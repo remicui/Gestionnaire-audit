@@ -129,6 +129,9 @@
         .y-visa-row { display: flex; border: 1px solid #000; height: 100%; }
         .y-visa-label { width: 22%; flex-shrink: 0; font-weight: bold; color: #000; padding: 6px 8px; font-size: 0.8em; border-right: 1px solid #000; }
         .y-visa-cell { flex: 1; padding: 6px 8px; font-size: 0.8em; display: flex; flex-direction: column; }
+        .y-clear-sig-btn { margin-top: 14px; }
+        .y-visa-nom-input { width: 60%; margin: 10px 0 4px 0; box-sizing: border-box; border: none; border-bottom: 1px solid #ccc; padding: 3px 2px; font-size: 1em; background: transparent; font-family: inherit; }
+        .y-visa-nom-input:focus { outline: none; border-bottom: 1px solid var(--bleu-accent); background: #fbfdff; }
         .y-fill-spacer { flex: 0 0 0; }
 
         .y-footer { text-align: center; font-size: 0.75em; color: #000; margin-top: 10px; line-height: 1.6; }
@@ -159,6 +162,7 @@
             #yaskawa-view .y-table textarea[rows="3"] { height: 56px !important; }
             #yaskawa-view .y-table textarea[rows="4"] { height: 74px !important; }
             #yaskawa-view #y_signature { max-width: 600px !important; width: 100% !important; height: 150px !important; border: none !important; background: transparent !important; }
+            #yaskawa-view .y-visa-nom-input { border: none !important; background: transparent !important; }
             #yaskawa-view .y-visa-header { font-size: 11pt !important; }
             #yaskawa-view .y-footer { font-size: 9pt !important; margin-top: 10px !important; line-height: 1.5 !important; }
             #yaskawa-view .y-sidebar { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -507,13 +511,16 @@
                         <div class="y-sidebar"><span>CLIENT</span></div>
                         <div class="y-content">
                             <div class="y-visa-row">
-                                <div class="y-visa-label">Visa du client</div>
-                                <div class="y-visa-cell">
-                                    <div class="y-visa-header">Nom et qualité du signataire, tampon et signature</div>
-                                    <canvas id="y_signature" width="680" height="140"></canvas>
-                                    <div class="no-print" style="margin-top:6px;">
+                                <div class="y-visa-label">
+                                    Visa du client
+                                    <div class="no-print y-clear-sig-btn">
                                         <button type="button" class="btn-remove" onclick="clearSignature()">🗑️ Effacer la signature</button>
                                     </div>
+                                </div>
+                                <div class="y-visa-cell">
+                                    <div class="y-visa-header">Nom et qualité du signataire, tampon et signature</div>
+                                    <input type="text" id="y_visa_nom" placeholder="Nom et qualité du signataire" class="y-visa-nom-input">
+                                    <canvas id="y_signature" width="680" height="140"></canvas>
                                     <div class="y-fill-spacer"></div>
                                 </div>
                             </div>
@@ -1008,7 +1015,7 @@
         lines.push(`Remarques fin de chantier : ${v('y_remarques_fin')}`);
         lines.push('');
         lines.push('--- CLIENT ---');
-        lines.push('Visa du client : voir signature sur le PDF joint');
+        lines.push(`Visa du client : ${v('y_visa_nom')} (signature sur le PDF joint)`);
         lines.push('');
         lines.push('SARL BECHAMEIL - 41 rue Lafayette - 58200 COSNE-SUR-LOIRE');
         lines.push('SIRET 830836722 00033 - TVA FR21830836722');
@@ -1028,7 +1035,7 @@
                 const sig = clonedDoc.getElementById('y_signature');
                 if (sig) { sig.style.border = 'none'; sig.style.background = 'transparent'; sig.style.boxShadow = 'none'; }
                 clonedDoc.querySelectorAll('#yaskawa-view .no-print').forEach((el) => { el.style.display = 'none'; });
-                clonedDoc.querySelectorAll('#yaskawa-view .y-table input, #yaskawa-view .y-table textarea').forEach((el) => {
+                clonedDoc.querySelectorAll('#yaskawa-view .y-table input, #yaskawa-view .y-table textarea, #yaskawa-view .y-visa-nom-input').forEach((el) => {
                     el.style.border = 'none';
                     el.style.background = 'transparent';
                 });
