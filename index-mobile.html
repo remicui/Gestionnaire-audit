@@ -942,7 +942,8 @@
         lines.push('SARL BECHAMEIL - 41 rue Lafayette - 58200 COSNE-SUR-LOIRE');
         lines.push('SIRET 830836722 00033 - TVA FR21830836722');
         lines.push('Tél : 07 84 54 84 67 - Mail : contact@bechameil.com - Site http://bechameil.com');
-        return { ficheNum, client: v('y_client_int'), body: lines.join('\n') };
+        const clientName = (v('y_client_int').trim() || v('y_client_fact').trim());
+        return { ficheNum, client: clientName, body: lines.join('\n') };
     }
 
     async function generateYaskawaPdfBlob() {
@@ -986,24 +987,42 @@
         const originalLabel = btn ? btn.innerHTML : null;
         if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Génération du PDF...'; }
 
-        try {
-            const { ficheNum, client } = buildYaskawaEmailText();
-            const subject = `Fiche d'intervention YASKAWA${client ? ' - ' + client : (' N° ' + ficheNum)}`;
-            const fileName = `Fiche_Intervention_YASKAWA_${ficheNum}.pdf`;
-            const pdfBlob = await generateYaskawaPdfBlob();
-            const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        const { ficheNum, client } = buildYaskawaEmailText();
+        const subject = `Fiche d'intervention YASKAWA${client ? ' - ' + client : (' N° ' + ficheNum)}`;
+        const fileName = `Fiche_Intervention_YASKAWA_${ficheNum}.pdf`;
 
-            // 1) Partage natif (mobile) : ouvre le sélecteur d'apps avec le PDF DÉJÀ joint, sans texte pré-rempli
+        let pdfBlob = null;
+        try {
+            pdfBlob = await generateYaskawaPdfBlob();
+        } catch (err) {
+            console.warn('Génération du PDF impossible :', err);
+            alert("Le PDF n'a pas pu être généré sur cet appareil. Votre messagerie va s'ouvrir sans PDF joint — utilisez le bouton \"GÉNÉRER LE RAPPORT PDF\" pour l'obtenir séparément.");
+            window.location.href = `mailto:secretariat@bechameil.com?subject=${encodeURIComponent(subject)}`;
+            if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
+            return;
+        }
+
+        // 1) Partage natif (mobile) : ouvre le sélecteur d'apps avec le PDF DÉJÀ joint, sans texte pré-rempli
+        try {
+            const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
             if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                await navigator.share({
-                    files: [pdfFile],
-                    title: subject
-                });
+                await navigator.share({ files: [pdfFile], title: subject });
+                if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
                 return;
             }
+        } catch (err) {
+            if (err && err.name === 'AbortError') {
+                // L'utilisateur a annulé le partage : on s'arrête là, sans repli
+                if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
+                return;
+            }
+            console.warn('Partage natif indisponible, repli sur téléchargement + mail :', err);
+        }
 
-            // 2) Repli : partage natif indisponible -> on télécharge le PDF puis on ouvre directement
-            //    la messagerie (comme avant), avec seulement l'objet prérempli, sans corps de message.
+        // 2) Repli (partage natif absent ou en échec) : on télécharge le PDF PUIS on ouvre la
+        //    messagerie, avec seulement l'objet prérempli, sans corps de message. Le téléchargement
+        //    a lieu dans TOUS les cas de repli, pour ne jamais laisser l'utilisateur sans le PDF.
+        try {
             const url = URL.createObjectURL(pdfBlob);
             const a = document.createElement('a');
             a.href = url;
@@ -1012,22 +1031,14 @@
             a.click();
             document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 15000);
-
-            const mailtoUrl = `mailto:secretariat@bechameil.com?subject=${encodeURIComponent(subject)}`;
-            setTimeout(() => { window.location.href = mailtoUrl; }, 600);
+            alert(`Le PDF "${fileName}" a été téléchargé. Joignez-le manuellement au message qui va s'ouvrir.`);
         } catch (err) {
-            if (err && err.name === 'AbortError') {
-                // L'utilisateur a annulé le partage : rien à faire
-            } else {
-                console.warn('Génération PDF impossible :', err);
-                const { ficheNum, client } = buildYaskawaEmailText();
-                const subject = `Fiche d'intervention YASKAWA${client ? ' - ' + client : (' N° ' + ficheNum)}`;
-                const mailtoUrl = `mailto:secretariat@bechameil.com?subject=${encodeURIComponent(subject)}`;
-                window.location.href = mailtoUrl;
-            }
-        } finally {
-            if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
+            console.warn('Téléchargement du PDF impossible :', err);
         }
+
+        const mailtoUrl = `mailto:secretariat@bechameil.com?subject=${encodeURIComponent(subject)}`;
+        setTimeout(() => { window.location.href = mailtoUrl; }, 500);
+        if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
     }
 
     let sigDrawing = false, sigLastX = 0, sigLastY = 0;

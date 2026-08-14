@@ -892,7 +892,8 @@
         lines.push('SARL BECHAMEIL - 41 rue Lafayette - 58200 COSNE-SUR-LOIRE');
         lines.push('SIRET 830836722 00033 - TVA FR21830836722');
         lines.push('Tél : 07 84 54 84 67 - Mail : contact@bechameil.com - Site http://bechameil.com');
-        return { ficheNum, client: v('y_client_int'), body: lines.join('\n') };
+        const clientName = (v('y_client_int').trim() || v('y_client_fact').trim());
+        return { ficheNum, client: clientName, body: lines.join('\n') };
     }
 
     async function generateYaskawaPdfBlob() {
