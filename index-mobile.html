@@ -264,9 +264,23 @@
             #generic-view .y-visa-cell {
                 overflow: visible !important;
             }
+            #generic-view .y-visa-row {
+                height: auto !important;
+            }
+            #generic-view .y-footer {
+                border: none !important;
+                margin-top: 14px !important;
+            }
             #generic-view .y-fill-spacer {
                 display: none !important;
             }
+
+            /* Compaction supplémentaire pour la fiche générique (plus de contenu que YASKAWA) */
+            #generic-view .y-table td { padding: 3px 6px !important; font-size: 9.5pt !important; line-height: 1.15 !important; }
+            #generic-view .y-table input, #generic-view .y-table textarea { font-size: 9.5pt !important; padding: 1px 2px !important; }
+            #generic-view .y-pieces-table td { padding: 2px 5px !important; }
+            #generic-view .y-table textarea[rows="6"] { height: 46px !important; }
+            #generic-view .y-table textarea[rows="2"] { height: 26px !important; }
         }
 
         /* ========================================================================
@@ -756,24 +770,6 @@
                                     <td><input type="text" id="g_piece_ref_5"></td>
                                     <td style="text-align:center;"><input type="checkbox" id="g_piece_stock_5" class="y-checkbox"></td>
                                     <td style="text-align:center;"><input type="checkbox" id="g_piece_commande_5" class="y-checkbox"></td>
-                                </tr>
-                                <tr>
-                                    <td><input type="text" id="g_piece_libelle_6"></td>
-                                    <td><input type="text" id="g_piece_ref_6"></td>
-                                    <td style="text-align:center;"><input type="checkbox" id="g_piece_stock_6" class="y-checkbox"></td>
-                                    <td style="text-align:center;"><input type="checkbox" id="g_piece_commande_6" class="y-checkbox"></td>
-                                </tr>
-                                <tr>
-                                    <td><input type="text" id="g_piece_libelle_7"></td>
-                                    <td><input type="text" id="g_piece_ref_7"></td>
-                                    <td style="text-align:center;"><input type="checkbox" id="g_piece_stock_7" class="y-checkbox"></td>
-                                    <td style="text-align:center;"><input type="checkbox" id="g_piece_commande_7" class="y-checkbox"></td>
-                                </tr>
-                                <tr>
-                                    <td><input type="text" id="g_piece_libelle_8"></td>
-                                    <td><input type="text" id="g_piece_ref_8"></td>
-                                    <td style="text-align:center;"><input type="checkbox" id="g_piece_stock_8" class="y-checkbox"></td>
-                                    <td style="text-align:center;"><input type="checkbox" id="g_piece_commande_8" class="y-checkbox"></td>
                                 </tr>
                             </table>
 
@@ -1519,7 +1515,7 @@
         lines.push(`Marque, modèle, type et références machine(s) : ${v('g_machines')}`);
         lines.push('');
         const pieces = [];
-        for (let i = 1; i <= 8; i++) {
+        for (let i = 1; i <= 5; i++) {
             const lib = v('g_piece_libelle_' + i), ref = v('g_piece_ref_' + i);
             if (lib || ref) {
                 pieces.push(`  - ${lib || '(sans libellé)'} | Réf : ${ref || '-'} | Pris sur stock : ${c('g_piece_stock_' + i) ? 'Oui' : 'Non'} | À commander : ${c('g_piece_commande_' + i) ? 'Oui' : 'Non'}`);
