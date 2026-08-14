@@ -18,6 +18,9 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --bleu-nuit-soft: #1a3a5a;    
@@ -587,6 +590,94 @@
 <script>
     let photoCounter = 0;
 
+    // ---------- SYNCHRONISATION CLOUD (Firebase Firestore) ----------
+    const firebaseConfig = {
+        apiKey: "AIzaSyC0VdQu0_7zbxPsxi2OCkMLTMcAAxNstyE",
+        authDomain: "bechameil-audit.firebaseapp.com",
+        projectId: "bechameil-audit",
+        storageBucket: "bechameil-audit.firebasestorage.app",
+        messagingSenderId: "963163767308",
+        appId: "1:963163767308:web:6182b401544466c075a429"
+    };
+
+    let fbDb = null;
+    let fbReady = false;
+    let fbListenerAttached = false;
+    const cloudSaveTimers = {};
+
+    function initFirebaseSync() {
+        try {
+            firebase.initializeApp(firebaseConfig);
+            fbDb = firebase.firestore();
+            fbDb.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+                console.warn('Persistance hors-ligne Firestore non activée :', err.code || err);
+            });
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    fbReady = true;
+                    attachFirestoreListener();
+                }
+            });
+            firebase.auth().signInAnonymously().catch((err) => {
+                console.warn('Connexion Firebase impossible, mode local uniquement :', err.message || err);
+            });
+        } catch (err) {
+            console.warn('Firebase indisponible, mode local uniquement :', err);
+        }
+    }
+
+    function attachFirestoreListener() {
+        if (fbListenerAttached || !fbDb) return;
+        fbListenerAttached = true;
+        fbDb.collection('fiches').onSnapshot((snapshot) => {
+            let changed = false;
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'removed') {
+                    if (localStorage.getItem(change.doc.id) !== null) {
+                        localStorage.removeItem(change.doc.id);
+                        changed = true;
+                    }
+                } else {
+                    const remoteJson = JSON.stringify(change.doc.data());
+                    if (localStorage.getItem(change.doc.id) !== remoteJson) {
+                        localStorage.setItem(change.doc.id, remoteJson);
+                        changed = true;
+                    }
+                }
+            });
+            if (changed) {
+                cleanHistory();
+                updateHistoryList();
+            }
+        }, (err) => {
+            console.warn('Écoute Firestore interrompue :', err.message || err);
+        });
+    }
+
+    // Écriture cloud différée (debounce) : évite d'envoyer une requête à chaque frappe clavier.
+    function cloudSave(id, data) {
+        if (!fbDb) return;
+        clearTimeout(cloudSaveTimers[id]);
+        cloudSaveTimers[id] = setTimeout(() => {
+            const json = JSON.stringify(data);
+            if (json.length > 900000) {
+                console.warn('Fiche trop volumineuse pour la synchronisation cloud (trop de photos ?) :', id);
+                return;
+            }
+            fbDb.collection('fiches').doc(id).set(data).catch((err) => {
+                console.warn('Sauvegarde cloud impossible (reste enregistré en local) :', err.message || err);
+            });
+        }, 1500);
+    }
+
+    function cloudDelete(id) {
+        clearTimeout(cloudSaveTimers[id]);
+        if (!fbDb) return;
+        fbDb.collection('fiches').doc(id).delete().catch((err) => {
+            console.warn('Suppression cloud impossible :', err.message || err);
+        });
+    }
+
     const dbTechInfo = { 
         "Siemens": "Leader mondial. Gammes ET200S, ET200SP, ET200MP...", 
         "Schneider / Téléméca": "Standard français. Gammes Advantys STB, OTB, TM3...", 
@@ -606,7 +697,7 @@
         }
     }
 
-    function initApp() { cleanHistory(); populateCpuBrands(); updateHistoryList(); initTooltips(); initSignaturePad(); registerServiceWorker(); }
+    function initApp() { cleanHistory(); populateCpuBrands(); updateHistoryList(); initTooltips(); initSignaturePad(); registerServiceWorker(); initFirebaseSync(); }
 
     function registerServiceWorker() {
         if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
@@ -645,7 +736,7 @@
             <div style="display:flex; gap:8px;">
                 <button class="btn-add" style="background:var(--bleu-accent); padding:8px 12px; font-size:0.8em;" onclick="${isYaskawa ? `loadYaskawaReport('${a.id}')` : `loadReport('${a.id}')`}">📂 OUVRIR</button>
                 <button class="btn-add" style="background:#2c527a; padding:8px 12px; font-size:0.8em;" onclick="${isYaskawa ? `exportYaskawaReport('${a.id}')` : `exportAuditDirect('${a.id}')`}">💾 EXPORT</button>
-                <button class="btn-remove" onclick="if(confirm('Supprimer ?')){localStorage.removeItem('${a.id}');updateHistoryList();}">❌</button>
+                <button class="btn-remove" onclick="if(confirm('Supprimer ?')){localStorage.removeItem('${a.id}');cloudDelete('${a.id}');updateHistoryList();}">❌</button>
             </div>`;
             container.appendChild(d);
         });
@@ -754,6 +845,7 @@
             photos: photosData
         };
         localStorage.setItem(id, JSON.stringify(data));
+        cloudSave(id, data);
         showSaveIndicator();
     }
 
@@ -808,6 +900,7 @@
         reader.onload = function(e) {
             const data = JSON.parse(e.target.result);
             localStorage.setItem(data.id, e.target.result);
+            cloudSave(data.id, data);
             updateHistoryList();
             alert("Rapport importé avec succès !");
         };
@@ -835,6 +928,7 @@
             signature: canvas.dataset.hasDrawing === 'true' ? canvas.toDataURL('image/png') : null
         };
         localStorage.setItem(id, JSON.stringify(data));
+        cloudSave(id, data);
         showSaveIndicator();
     }
 
