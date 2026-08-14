@@ -119,7 +119,7 @@
         .y-horaires { margin-top: -1px; }
         .y-horaires-label { writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; font-weight: bold; white-space: nowrap; }
 
-        .y-table input, .y-table textarea { width: 100%; box-sizing: border-box; border: none; border-bottom: 1px solid #ccc; padding: 3px 2px; font-size: 1em; background: transparent; font-family: inherit; }
+        .y-table input:not([type="checkbox"]), .y-table textarea { width: 100%; box-sizing: border-box; border: none; border-bottom: 1px solid #ccc; padding: 3px 2px; font-size: 1em; background: transparent; font-family: inherit; }
         .y-table input:focus, .y-table textarea:focus { outline: none; border-bottom: 1px solid var(--bleu-accent); background: #fbfdff; }
         .y-table textarea { resize: vertical; border: 1px solid #ddd; border-radius: 3px; }
         .y-table input[type="date"], .y-table input[type="time"] { border: 1px solid #ddd; border-radius: 3px; }
@@ -142,101 +142,119 @@
         @media print {
             @page { size: A4; margin: 8mm; }
 
-            #yaskawa-view, #generic-view.active {
+            #yaskawa-view.active , #generic-view.active {
                 display: block !important;
             }
-            #yaskawa-view, #generic-view .yaskawa-a4-wrapper {
+            #yaskawa-view .yaskawa-a4-wrapper , #generic-view .yaskawa-a4-wrapper {
                 box-shadow: none !important; padding: 0 !important; width: 100% !important; margin: 0 !important;
             }
-            #app-shell:has(#yaskawa-view, #generic-view.active) { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
+            #app-shell:has(#yaskawa-view.active, #generic-view.active) { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
 
             /* Le document doit remplir toute la page A4 (comme le PDF d'origine) tout en tenant sur une seule feuille */
-            #yaskawa-view, #generic-view .y-logo { max-height: 68px; }
-            #yaskawa-view, #generic-view .y-title-cell h1 { font-size: 1.55em; }
-            #yaskawa-view, #generic-view .y-header { min-height: 0; }
-            #yaskawa-view, #generic-view .y-logo-cell { padding: 8px 18px; }
-            #yaskawa-view, #generic-view .y-title-cell { padding: 8px 18px; }
-            #yaskawa-view, #generic-view .y-sidebar { width: 26px; }
-            #yaskawa-view, #generic-view .y-sidebar span { font-size: 0.8em; letter-spacing: 2px; }
-            #yaskawa-view, #generic-view .y-table td { padding: 6px 9px !important; font-size: 11pt !important; line-height: 1.3 !important; }
-            #yaskawa-view, #generic-view .y-italic { font-size: 0.88em; }
-            #yaskawa-view, #generic-view .y-table input, #yaskawa-view, #generic-view .y-table textarea { border: none !important; background: transparent !important; padding: 2px 3px !important; font-size: 11pt !important; line-height: 1.3 !important; }
-            #yaskawa-view, #generic-view .y-table textarea[rows="2"] { height: 38px !important; }
-            #yaskawa-view, #generic-view .y-table textarea[rows="3"] { height: 56px !important; }
-            #yaskawa-view, #generic-view .y-table textarea[rows="4"] { height: 74px !important; }
-            #yaskawa-view, #generic-view #y_signature { max-width: 600px !important; width: 100% !important; height: 150px !important; border: none !important; background: transparent !important; }
-            #yaskawa-view, #generic-view .y-visa-nom-input { border: none !important; background: transparent !important; }
-            #yaskawa-view, #generic-view .y-visa-header { font-size: 11pt !important; }
-            #yaskawa-view, #generic-view .y-footer { font-size: 9pt !important; margin-top: 10px !important; line-height: 1.5 !important; }
-            #yaskawa-view, #generic-view .y-sidebar { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            #yaskawa-view .y-logo , #generic-view .y-logo { max-height: 68px; }
+            #yaskawa-view .y-title-cell h1 , #generic-view .y-title-cell h1 { font-size: 1.55em; }
+            #yaskawa-view .y-header , #generic-view .y-header { min-height: 0; }
+            #yaskawa-view .y-logo-cell , #generic-view .y-logo-cell { padding: 8px 18px; }
+            #yaskawa-view .y-title-cell , #generic-view .y-title-cell { padding: 8px 18px; }
+            #yaskawa-view .y-sidebar , #generic-view .y-sidebar { width: 26px; }
+            #yaskawa-view .y-sidebar span , #generic-view .y-sidebar span { font-size: 0.8em; letter-spacing: 2px; }
+            #yaskawa-view .y-table td , #generic-view .y-table td { padding: 6px 9px !important; font-size: 11pt !important; line-height: 1.3 !important; }
+            #yaskawa-view .y-italic , #generic-view .y-italic { font-size: 0.88em; }
+            #yaskawa-view .y-table input, #generic-view .y-table input, #yaskawa-view .y-table textarea, #generic-view .y-table textarea { border: none !important; background: transparent !important; padding: 2px 3px !important; font-size: 11pt !important; line-height: 1.3 !important; }
+            #yaskawa-view .y-table textarea[rows="2"] , #generic-view .y-table textarea[rows="2"] { height: 38px !important; }
+            #yaskawa-view .y-table textarea[rows="3"] , #generic-view .y-table textarea[rows="3"] { height: 56px !important; }
+            #yaskawa-view .y-table textarea[rows="4"] , #generic-view .y-table textarea[rows="4"] { height: 74px !important; }
+            #yaskawa-view #y_signature , #generic-view #y_signature { max-width: 600px !important; width: 100% !important; height: 150px !important; border: none !important; background: transparent !important; }
+            #yaskawa-view .y-visa-nom-input , #generic-view .y-visa-nom-input { border: none !important; background: transparent !important; }
+            #yaskawa-view .y-visa-header , #generic-view .y-visa-header { font-size: 11pt !important; }
+            #yaskawa-view .y-footer , #generic-view .y-footer { font-size: 9pt !important; margin-top: 10px !important; line-height: 1.5 !important; }
+            #yaskawa-view .y-sidebar , #generic-view .y-sidebar { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
             /* Masquer les icônes natives d'horloge / calendrier des champs date et heure */
-            #yaskawa-view, #generic-view input[type="date"]::-webkit-calendar-picker-indicator,
-            #yaskawa-view, #generic-view input[type="time"]::-webkit-calendar-picker-indicator {
+            #yaskawa-view input[type="date"]::-webkit-calendar-picker-indicator, #generic-view input[type="date"]::-webkit-calendar-picker-indicator,
+            #yaskawa-view input[type="time"]::-webkit-calendar-picker-indicator , #generic-view input[type="time"]::-webkit-calendar-picker-indicator {
                 display: none !important;
                 -webkit-appearance: none !important;
                 opacity: 0 !important;
             }
-            #yaskawa-view, #generic-view input[type="date"],
-            #yaskawa-view, #generic-view input[type="time"] {
+            #yaskawa-view input[type="date"], #generic-view input[type="date"],
+            #yaskawa-view input[type="time"] , #generic-view input[type="time"] {
                 -webkit-appearance: none !important;
                 appearance: none !important;
             }
 
             /* Supprimer les cellules d'en-tête vides qui créent des lignes/cases superflues absentes du PDF d'origine */
-            #yaskawa-view, #generic-view .y-subheader:empty {
+            #yaskawa-view .y-subheader:empty , #generic-view .y-subheader:empty {
                 border-top: none !important;
                 border-left: none !important;
                 border-right: none !important;
                 background: transparent !important;
             }
 
-            #yaskawa-view, #generic-view .yaskawa-doc, #yaskawa-view, #generic-view .y-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
+            #yaskawa-view .yaskawa-doc { page-break-inside: avoid !important; break-inside: avoid !important; }
+            #yaskawa-view .y-footer, #generic-view .y-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
+            #generic-view .y-pieces-table tr { page-break-inside: avoid !important; break-inside: avoid !important; }
 
-            /* Étirer le document pour occuper toute la hauteur de la page A4, sans déborder ni chevaucher le pied de page */
-            #yaskawa-view, #generic-view .yaskawa-a4-wrapper {
+            /* Étirer le document YASKAWA pour occuper toute la hauteur de la page A4 (fiche courte, tient sur 1 page) */
+            #yaskawa-view .yaskawa-a4-wrapper {
                 height: 277mm !important;
                 display: flex !important;
                 flex-direction: column !important;
                 overflow: hidden !important;
             }
-            #yaskawa-view, #generic-view #yaskawaForm {
+            #yaskawa-view #yaskawaForm {
                 display: flex !important;
                 flex-direction: column !important;
                 flex: 1 1 auto !important;
                 min-height: 0 !important;
             }
-            #yaskawa-view, #generic-view .yaskawa-doc {
+            #yaskawa-view .yaskawa-doc {
                 display: flex !important;
                 flex-direction: column !important;
                 flex: 1 1 auto !important;
                 min-height: 0 !important;
                 overflow: hidden !important;
             }
-            #yaskawa-view, #generic-view .y-block-last {
+            #yaskawa-view .y-block-last {
                 flex: 1 1 auto !important;
                 display: flex !important;
                 min-height: 0 !important;
             }
-            #yaskawa-view, #generic-view .y-block-last .y-content {
+            #yaskawa-view .y-block-last .y-content {
                 flex: 1 1 auto !important;
                 display: flex !important;
                 flex-direction: column !important;
                 min-height: 0 !important;
             }
-            #yaskawa-view, #generic-view .y-visa-row {
+            #yaskawa-view .y-visa-row {
                 flex: 1 1 auto !important;
                 min-height: 0 !important;
             }
-            #yaskawa-view, #generic-view .y-visa-cell {
+            #yaskawa-view .y-visa-cell {
                 min-height: 0 !important;
                 overflow: hidden !important;
             }
-            #yaskawa-view, #generic-view .y-fill-spacer {
+            #yaskawa-view .y-fill-spacer {
                 flex: 1 1 auto !important;
             }
-            #yaskawa-view, #generic-view .y-footer {
+            #yaskawa-view .y-footer {
                 flex: 0 0 auto !important;
+            }
+
+            /* Fiche générique : contenu plus long (tableau de pièces, rapport...), on laisse la hauteur
+               naturelle s'étaler sur autant de pages que nécessaire, sans forcer/couper à 277mm. */
+            #generic-view .yaskawa-a4-wrapper {
+                height: auto !important;
+                overflow: visible !important;
+            }
+            #generic-view .yaskawa-doc {
+                overflow: visible !important;
+            }
+            #generic-view .y-visa-cell {
+                overflow: visible !important;
+            }
+            #generic-view .y-fill-spacer {
+                display: none !important;
             }
         }
     </style>
