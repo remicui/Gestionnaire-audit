@@ -823,12 +823,15 @@
         box.style.cssText = 'background:white; border-radius:12px; max-width:560px; width:100%; max-height:85vh; overflow-y:auto; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.4);';
         box.innerHTML = `
             <h3 style="color:var(--bleu-nuit-soft); margin-top:0;">✅ PDF téléchargé : ${fileName}</h3>
-            <p style="color:#444; line-height:1.5;">Ouvrez vous-même votre messagerie (Outlook, Gmail...), créez un nouveau message, <strong>joignez le PDF</strong> depuis votre dossier Téléchargements, puis collez le texte ci-dessous.</p>
+            <p style="color:#444; line-height:1.5;">Ouvrez vous-même votre messagerie (Outlook, Gmail...), créez un nouveau message, <strong>joignez le PDF</strong> depuis votre dossier Téléchargements, puis collez les informations ci-dessous.</p>
+            <p style="margin-bottom:4px;"><strong>Destinataire :</strong></p>
+            <input type="text" readonly id="emailToField" value="secretariat@bechameil.com" style="width:100%; padding:8px; margin-bottom:14px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
             <p style="margin-bottom:4px;"><strong>Objet :</strong></p>
             <input type="text" readonly id="emailSubjectField" value="${subject.replace(/"/g, '&quot;')}" style="width:100%; padding:8px; margin-bottom:14px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
             <p style="margin-bottom:4px;"><strong>Corps du message :</strong></p>
             <textarea readonly id="emailBodyField" style="width:100%; height:200px; padding:8px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; font-size:0.9em;">${body}</textarea>
             <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+                <button id="copyToBtn" style="flex:1; background:#2c527a; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;">📋 Copier le destinataire</button>
                 <button id="copySubjectBtn" style="flex:1; background:var(--bleu-accent); color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;">📋 Copier l'objet</button>
                 <button id="copyBodyBtn" style="flex:1; background:#fbc02d; color:var(--bleu-nuit-soft); border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;">📋 Copier le texte</button>
                 <button id="closeEmailOverlay" style="flex:1; background:#95a5a6; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;">Fermer</button>
@@ -837,6 +840,9 @@
         overlay.appendChild(box);
         document.body.appendChild(overlay);
 
+        document.getElementById('copyToBtn').onclick = (e) => {
+            navigator.clipboard.writeText('secretariat@bechameil.com').then(() => { e.target.textContent = '✅ Destinataire copié !'; setTimeout(() => e.target.textContent = '📋 Copier le destinataire', 1500); });
+        };
         document.getElementById('copySubjectBtn').onclick = (e) => {
             navigator.clipboard.writeText(subject).then(() => { e.target.textContent = '✅ Objet copié !'; setTimeout(() => e.target.textContent = "📋 Copier l'objet", 1500); });
         };
@@ -932,7 +938,7 @@
 
         try {
             const { ficheNum, client, body } = buildYaskawaEmailText();
-            const subject = `Fiche d'intervention YASKAWA N° ${ficheNum}${client ? ' - ' + client : ''}`;
+            const subject = `Fiche d'intervention YASKAWA${client ? ' - ' + client : (' N° ' + ficheNum)}`;
             const fileName = `Fiche_Intervention_YASKAWA_${ficheNum}.pdf`;
             const pdfBlob = await generateYaskawaPdfBlob();
             const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
@@ -968,7 +974,7 @@
                 // La génération du PDF a échoué (ex : image bloquée par le navigateur en mode fichier local)
                 console.warn('Génération PDF impossible, repli sur le résumé texte :', err);
                 const { ficheNum, client, body } = buildYaskawaEmailText();
-                const subject = `Fiche d'intervention YASKAWA N° ${ficheNum}${client ? ' - ' + client : ''}`;
+                const subject = `Fiche d'intervention YASKAWA${client ? ' - ' + client : (' N° ' + ficheNum)}`;
                 const bodyWithNote = `${body}\n\nNote : le PDF n'a pas pu être généré automatiquement sur cet ordinateur. Utilisez le bouton "GÉNÉRER LE RAPPORT PDF" pour l'enregistrer, puis joignez-le manuellement à cet e-mail.`;
                 showEmailReadyBanner(subject, bodyWithNote, '(à générer via le bouton PDF)');
             }

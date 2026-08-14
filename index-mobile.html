@@ -988,7 +988,7 @@
 
         try {
             const { ficheNum, client } = buildYaskawaEmailText();
-            const subject = `Fiche d'intervention YASKAWA N° ${ficheNum}${client ? ' - ' + client : ''}`;
+            const subject = `Fiche d'intervention YASKAWA${client ? ' - ' + client : (' N° ' + ficheNum)}`;
             const fileName = `Fiche_Intervention_YASKAWA_${ficheNum}.pdf`;
             const pdfBlob = await generateYaskawaPdfBlob();
             const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
@@ -1013,7 +1013,7 @@
             document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 15000);
 
-            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}`;
+            const mailtoUrl = `mailto:secretariat@bechameil.com?subject=${encodeURIComponent(subject)}`;
             setTimeout(() => { window.location.href = mailtoUrl; }, 600);
         } catch (err) {
             if (err && err.name === 'AbortError') {
@@ -1021,8 +1021,8 @@
             } else {
                 console.warn('Génération PDF impossible :', err);
                 const { ficheNum, client } = buildYaskawaEmailText();
-                const subject = `Fiche d'intervention YASKAWA N° ${ficheNum}${client ? ' - ' + client : ''}`;
-                const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}`;
+                const subject = `Fiche d'intervention YASKAWA${client ? ' - ' + client : (' N° ' + ficheNum)}`;
+                const mailtoUrl = `mailto:secretariat@bechameil.com?subject=${encodeURIComponent(subject)}`;
                 window.location.href = mailtoUrl;
             }
         } finally {
