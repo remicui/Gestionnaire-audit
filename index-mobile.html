@@ -252,27 +252,52 @@
                 flex: 0 0 auto !important;
             }
 
-            /* Fiche générique : contenu plus long (tableau de pièces, rapport...), on laisse la hauteur
-               naturelle s'étaler sur autant de pages que nécessaire, sans forcer/couper à 277mm. */
+            /* Fiche générique : même mécanisme d'étirement que YASKAWA pour remplir toute la page,
+               le contenu ayant maintenant été réduit pour tenir confortablement sur une page A4. */
             #generic-view .yaskawa-a4-wrapper {
-                height: auto !important;
-                overflow: visible !important;
+                height: 277mm !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+            }
+            #generic-view #genericForm {
+                display: flex !important;
+                flex-direction: column !important;
+                flex: 1 1 auto !important;
+                min-height: 0 !important;
             }
             #generic-view .yaskawa-doc {
-                overflow: visible !important;
+                display: flex !important;
+                flex-direction: column !important;
+                flex: 1 1 auto !important;
+                min-height: 0 !important;
+                overflow: hidden !important;
             }
-            #generic-view .y-visa-cell {
-                overflow: visible !important;
+            #generic-view .y-block-last {
+                flex: 1 1 auto !important;
+                display: flex !important;
+                min-height: 0 !important;
+            }
+            #generic-view .y-block-last .y-content {
+                flex: 1 1 auto !important;
+                display: flex !important;
+                flex-direction: column !important;
+                min-height: 0 !important;
             }
             #generic-view .y-visa-row {
-                height: auto !important;
+                flex: 1 1 auto !important;
+                min-height: 0 !important;
             }
-            #generic-view .y-footer {
-                border: none !important;
-                margin-top: 14px !important;
+            #generic-view .y-visa-cell {
+                min-height: 0 !important;
+                overflow: hidden !important;
             }
             #generic-view .y-fill-spacer {
-                display: none !important;
+                flex: 1 1 auto !important;
+            }
+            #generic-view .y-footer {
+                flex: 0 0 auto !important;
+                border: none !important;
             }
 
             /* Compaction supplémentaire pour la fiche générique (plus de contenu que YASKAWA) */
