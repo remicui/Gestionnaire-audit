@@ -357,6 +357,12 @@
             </select>
             <button class="btn-main" onclick="createNewReport()">➕ COMMENCER L'AUDIT</button>
         </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">💬 BUGS & SUGGESTIONS</h3>
+            <p style="color:#666; font-size:0.9em; margin-top:0;">Un problème avec l'app, ou une idée pour l'améliorer ? Fais-le remonter ici.</p>
+            <button class="btn-main" style="background:#8e44ad;" onclick="showFeedbackModal()">📝 SIGNALER UN BUG OU UNE IDÉE</button>
+        </div>
         
         <div class="card">
             <h3>HISTORIQUE DES RAPPORTS</h3>
@@ -944,6 +950,27 @@
         }, (err) => {
             console.warn('Écoute Firestore (clients) interrompue :', err.message || err);
         });
+
+        fbDb.collection('feedback').onSnapshot((snapshot) => {
+            let changed = false;
+            const list = getFeedbackList();
+            const byId = {};
+            list.forEach((item) => { byId[item.id] = item; });
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'removed') {
+                    if (byId[change.doc.id]) { delete byId[change.doc.id]; changed = true; }
+                } else {
+                    byId[change.doc.id] = change.doc.data();
+                    changed = true;
+                }
+            });
+            if (changed) {
+                localStorage.setItem('feedbackList', JSON.stringify(Object.values(byId)));
+                renderFeedbackList();
+            }
+        }, (err) => {
+            console.warn('Écoute Firestore (feedback) interrompue :', err.message || err);
+        });
     }
 
     // Écriture cloud différée (debounce) : évite d'envoyer une requête à chaque frappe clavier.
@@ -1084,7 +1111,113 @@
         }
     }
 
-    const dbTechInfo = { 
+    // ---------- BUGS & SUGGESTIONS ----------
+    function getFeedbackList() {
+        try { return JSON.parse(localStorage.getItem('feedbackList') || '[]'); }
+        catch (e) { return []; }
+    }
+
+    function cloudSaveFeedback(data) {
+        if (!fbDb) return;
+        fbDb.collection('feedback').doc(data.id).set(data).catch((err) => {
+            console.warn('Envoi du signalement (cloud) impossible :', err.message || err);
+        });
+    }
+
+    function showFeedbackModal() {
+        const old = document.getElementById('feedbackOverlay');
+        if (old) old.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'feedbackOverlay';
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:5000; display:flex; align-items:center; justify-content:center; padding:16px;';
+
+        const box = document.createElement('div');
+        box.style.cssText = 'background:white; border-radius:12px; max-width:560px; width:100%; max-height:85vh; overflow-y:auto; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.4);';
+        box.innerHTML = `
+            <h3 style="color:var(--bleu-nuit-soft); margin-top:0;">💬 Bugs & Suggestions</h3>
+            <div style="display:flex; gap:10px; margin-bottom:14px;">
+                <label id="fbTypeBugLabel" style="flex:1; text-align:center; padding:10px; border:2px solid #ddd; border-radius:8px; cursor:pointer; font-weight:bold;">
+                    <input type="radio" name="fbType" value="bug" id="fbTypeBug" style="display:none;" checked> 🐛 Bug
+                </label>
+                <label id="fbTypeIdeaLabel" style="flex:1; text-align:center; padding:10px; border:2px solid #ddd; border-radius:8px; cursor:pointer; font-weight:bold;">
+                    <input type="radio" name="fbType" value="idea" id="fbTypeIdea" style="display:none;"> 💡 Idée
+                </label>
+            </div>
+            <textarea id="fbDescription" placeholder="Décris le problème ou ton idée..." style="width:100%; height:100px; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; margin-bottom:12px;"></textarea>
+            <input type="text" id="fbName" placeholder="Ton nom (optionnel)" list="technicienDatalist" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; margin-bottom:16px;">
+            <div style="display:flex; gap:10px; margin-bottom:12px;">
+                <button type="button" style="flex:1; background:#8e44ad; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;" onclick="submitFeedback()">Envoyer</button>
+                <button type="button" style="flex:1; background:#95a5a6; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;" onclick="document.getElementById('feedbackOverlay').remove()">Fermer</button>
+            </div>
+            <div id="fbConfirmMsg" style="display:none; color:#27ae60; font-weight:bold; text-align:center; margin-bottom:16px;">✅ Merci, c'est envoyé !</div>
+            <h4 style="color:var(--bleu-nuit-soft); border-top:1px solid #eee; padding-top:16px; margin-bottom:8px;">Historique</h4>
+            <div id="fbList"></div>
+        `;
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        ['fbTypeBug', 'fbTypeIdea'].forEach(id => document.getElementById(id).addEventListener('change', updateFeedbackTypeStyle));
+        updateFeedbackTypeStyle();
+        renderFeedbackList();
+    }
+
+    function updateFeedbackTypeStyle() {
+        const bug = document.getElementById('fbTypeBug');
+        const bugLabel = document.getElementById('fbTypeBugLabel');
+        const ideaLabel = document.getElementById('fbTypeIdeaLabel');
+        if (!bug) return;
+        if (bug.checked) {
+            bugLabel.style.borderColor = 'var(--bleu-accent)'; bugLabel.style.background = '#eef5fb';
+            ideaLabel.style.borderColor = '#ddd'; ideaLabel.style.background = 'white';
+        } else {
+            ideaLabel.style.borderColor = 'var(--bleu-accent)'; ideaLabel.style.background = '#eef5fb';
+            bugLabel.style.borderColor = '#ddd'; bugLabel.style.background = 'white';
+        }
+    }
+
+    function submitFeedback() {
+        const desc = document.getElementById('fbDescription').value.trim();
+        if (!desc) { alert("Merci de décrire le bug ou l'idée avant d'envoyer."); return; }
+        const type = document.getElementById('fbTypeBug').checked ? 'bug' : 'idea';
+        const name = document.getElementById('fbName').value.trim();
+        const id = 'feedback_' + Date.now();
+        const data = { id, type, description: desc, name: name || 'Anonyme', timestamp: Date.now() };
+
+        const list = getFeedbackList();
+        list.unshift(data);
+        localStorage.setItem('feedbackList', JSON.stringify(list));
+        cloudSaveFeedback(data);
+
+        document.getElementById('fbDescription').value = '';
+        document.getElementById('fbName').value = '';
+        const msg = document.getElementById('fbConfirmMsg');
+        msg.style.display = 'block';
+        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
+        renderFeedbackList();
+    }
+
+    function renderFeedbackList() {
+        const container = document.getElementById('fbList');
+        if (!container) return;
+        const list = getFeedbackList().sort((a, b) => b.timestamp - a.timestamp);
+        if (list.length === 0) {
+            container.innerHTML = '<p style="color:#999; font-size:0.9em;">Aucun signalement pour le moment.</p>';
+            return;
+        }
+        container.innerHTML = list.map(item => {
+            const icon = item.type === 'bug' ? '🐛' : '💡';
+            const date = new Date(item.timestamp).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const safeDesc = String(item.description || '').replace(/</g, '&lt;');
+            return `<div style="border-bottom:1px solid #eee; padding:10px 0;">
+                <div style="font-weight:bold;">${icon} ${safeDesc}</div>
+                <div style="font-size:0.8em; color:#999;">${item.name || 'Anonyme'} — ${date}</div>
+            </div>`;
+        }).join('');
+    }
+
+    const dbTechInfo = {
         "Siemens": "Leader mondial. Gammes ET200S, ET200SP, ET200MP...", 
         "Schneider / Téléméca": "Standard français. Gammes Advantys STB, OTB, TM3...", 
         "Rockwell / AB": "Haut de gamme. Gammes Point I/O, Flex I/O...", 
