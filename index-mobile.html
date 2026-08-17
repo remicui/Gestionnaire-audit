@@ -520,7 +520,7 @@
                                 </tr>
                                 <tr>
                                     <td class="y-label">Société/ Client</td>
-                                    <td><input type="text" id="y_client_int"></td>
+                                    <td><input type="text" id="y_client_int" list="clientDatalist"></td>
                                     <td><input type="text" id="y_client_fact"></td>
                                 </tr>
                                 <tr>
@@ -689,7 +689,7 @@
                                 </tr>
                                 <tr>
                                     <td class="y-label">Société/ Client</td>
-                                    <td><input type="text" id="g_client_int"></td>
+                                    <td><input type="text" id="g_client_int" list="clientDatalist"></td>
                                     <td><input type="text" id="g_client_fact"></td>
                                 </tr>
                                 <tr>
@@ -892,14 +892,20 @@
                 if (user) {
                     fbReady = true;
                     attachFirestoreListener();
+                    updateSyncStatusUI();
                 }
             });
             firebase.auth().signInAnonymously().catch((err) => {
                 console.warn('Connexion Firebase impossible, mode local uniquement :', err.message || err);
+                updateSyncStatusUI();
             });
         } catch (err) {
             console.warn('Firebase indisponible, mode local uniquement :', err);
+            updateSyncStatusUI();
         }
+        window.addEventListener('online', updateSyncStatusUI);
+        window.addEventListener('offline', updateSyncStatusUI);
+        updateSyncStatusUI();
     }
 
     function attachFirestoreListener() {
@@ -941,6 +947,25 @@
         }, (err) => {
             console.warn('Écoute Firestore interrompue :', err.message || err);
         });
+
+        fbDb.collection('clients').onSnapshot((snapshot) => {
+            let changed = false;
+            const dir = getClientDirectory();
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'removed') {
+                    if (dir[change.doc.id]) { delete dir[change.doc.id]; changed = true; }
+                } else {
+                    dir[change.doc.id] = change.doc.data();
+                    changed = true;
+                }
+            });
+            if (changed) {
+                localStorage.setItem('clientDirectory', JSON.stringify(dir));
+                refreshClientDatalist();
+            }
+        }, (err) => {
+            console.warn('Écoute Firestore (clients) interrompue :', err.message || err);
+        });
     }
 
     // Écriture cloud différée (debounce) : évite d'envoyer une requête à chaque frappe clavier.
@@ -981,6 +1006,98 @@
         });
     }
 
+    // ---------- NUMÉROTATION AUTOMATIQUE DES FICHES ----------
+    // Compteur partagé dans le cloud (toutes les fiches YASKAWA + génériques partagent la même
+    // séquence, comme sur le papier). En cas d'absence de connexion, repli sur un compteur local.
+    async function getNextFicheNumber() {
+        if (fbDb && fbReady) {
+            try {
+                const counterRef = fbDb.collection('counters').doc('fiche');
+                const newNum = await fbDb.runTransaction(async (t) => {
+                    const doc = await t.get(counterRef);
+                    const current = doc.exists ? (doc.data().value || 0) : 0;
+                    const next = current + 1;
+                    t.set(counterRef, { value: next }, { merge: true });
+                    return next;
+                });
+                localStorage.setItem('lastFicheNumber', String(newNum));
+                return String(newNum).padStart(4, '0');
+            } catch (err) {
+                console.warn('Numérotation cloud impossible, repli local :', err.message || err);
+            }
+        }
+        const last = parseInt(localStorage.getItem('lastFicheNumber') || '0', 10);
+        const next = last + 1;
+        localStorage.setItem('lastFicheNumber', String(next));
+        return String(next).padStart(4, '0') + '*'; // '*' signale un numéro attribué hors-ligne (à vérifier)
+    }
+
+    // ---------- CARNET D'ADRESSES CLIENT (auto-complétion) ----------
+    function getClientDirectory() {
+        try { return JSON.parse(localStorage.getItem('clientDirectory') || '{}'); }
+        catch (e) { return {}; }
+    }
+
+    function updateClientDirectory(name, info) {
+        if (!name || !name.trim()) return;
+        const dir = getClientDirectory();
+        dir[name.trim()] = info;
+        localStorage.setItem('clientDirectory', JSON.stringify(dir));
+        cloudSaveClientDirectory(name.trim(), info);
+        refreshClientDatalist();
+    }
+
+    function cloudSaveClientDirectory(name, info) {
+        if (!fbDb) return;
+        fbDb.collection('clients').doc(name).set(info, { merge: true }).catch((err) => {
+            console.warn('Sauvegarde du carnet client (cloud) impossible :', err.message || err);
+        });
+    }
+
+    function refreshClientDatalist() {
+        const dir = getClientDirectory();
+        const names = Object.keys(dir).sort();
+        ['clientDatalist'].forEach((listId) => {
+            const list = document.getElementById(listId);
+            if (!list) return;
+            list.innerHTML = names.map(n => `<option value="${n.replace(/"/g, '&quot;')}"></option>`).join('');
+        });
+    }
+
+    function attachClientAutocomplete(nameFieldId, fields) {
+        const nameField = document.getElementById(nameFieldId);
+        if (!nameField) return;
+        nameField.addEventListener('change', () => {
+            const dir = getClientDirectory();
+            const info = dir[nameField.value.trim()];
+            if (!info) return;
+            Object.keys(fields).forEach((key) => {
+                const el = document.getElementById(fields[key]);
+                if (el && !el.value) el.value = info[key] || '';
+            });
+        });
+    }
+
+    // ---------- INDICATEUR DE SYNCHRONISATION / HORS-LIGNE ----------
+    function updateSyncStatusUI() {
+        const el = document.getElementById('syncStatusBadge');
+        if (!el) return;
+        if (!navigator.onLine) {
+            el.textContent = '🔴 Hors-ligne — sera synchronisé à la reconnexion';
+            el.style.background = '#c0392b';
+            el.style.display = 'block';
+        } else if (!fbReady) {
+            el.textContent = '🟡 Connexion à la synchronisation…';
+            el.style.background = '#e67e22';
+            el.style.display = 'block';
+        } else {
+            el.textContent = '🟢 Synchronisé';
+            el.style.background = '#27ae60';
+            el.style.display = 'block';
+            setTimeout(() => { if (el.textContent.includes('Synchronisé')) el.style.display = 'none'; }, 2500);
+        }
+    }
+
     const dbTechInfo = { 
         "Siemens": "Leader mondial. Gammes ET200S, ET200SP, ET200MP...", 
         "Schneider / Téléméca": "Standard français. Gammes Advantys STB, OTB, TM3...", 
@@ -1000,7 +1117,12 @@
         }
     }
 
-    function initApp() { cleanHistory(); populateCpuBrands(); updateHistoryList(); initTooltips(); initSignaturePad(); registerServiceWorker(); initFirebaseSync(); }
+    function initApp() {
+        cleanHistory(); populateCpuBrands(); updateHistoryList(); initTooltips(); initSignaturePad(); registerServiceWorker(); initFirebaseSync();
+        refreshClientDatalist();
+        attachClientAutocomplete('y_client_int', { adresse: 'y_adresse_int', contact: 'y_contact', tel: 'y_tel' });
+        attachClientAutocomplete('g_client_int', { adresse: 'g_adresse_int', contact: 'g_contact', tel: 'g_tel', email: 'g_email' });
+    }
 
     function registerServiceWorker() {
         if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
@@ -1224,8 +1346,15 @@
         document.getElementById('yaskawaForm').reset();
         document.getElementById('currentYaskawaId').value = id;
         document.getElementById('y_date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('y_ficheNum').value = '…';
         clearSignature();
         showView('yaskawa-view');
+        getNextFicheNumber().then((num) => {
+            if (document.getElementById('currentYaskawaId').value === id) {
+                document.getElementById('y_ficheNum').value = num;
+                saveYaskawaReport();
+            }
+        });
     }
 
     function saveYaskawaReport() {
@@ -1240,6 +1369,11 @@
         };
         localStorage.setItem(id, JSON.stringify(data));
         cloudSave(id, data);
+        updateClientDirectory(document.getElementById('y_client_int').value, {
+            adresse: document.getElementById('y_adresse_int').value,
+            contact: document.getElementById('y_contact').value,
+            tel: document.getElementById('y_tel').value
+        });
         showSaveIndicator();
     }
 
@@ -1476,8 +1610,15 @@
         document.getElementById('genericForm').reset();
         document.getElementById('currentGenericId').value = id;
         document.getElementById('g_date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('g_ficheNum').value = '…';
         clearSignatureGeneric();
         showView('generic-view');
+        getNextFicheNumber().then((num) => {
+            if (document.getElementById('currentGenericId').value === id) {
+                document.getElementById('g_ficheNum').value = num;
+                saveGenericReport();
+            }
+        });
     }
 
     function saveGenericReport() {
@@ -1492,6 +1633,12 @@
         };
         localStorage.setItem(id, JSON.stringify(data));
         cloudSave(id, data);
+        updateClientDirectory(document.getElementById('g_client_int').value, {
+            adresse: document.getElementById('g_adresse_int').value,
+            contact: document.getElementById('g_contact').value,
+            tel: document.getElementById('g_tel').value,
+            email: document.getElementById('g_email').value
+        });
         showSaveIndicator();
     }
 
@@ -1714,5 +1861,7 @@
     function updateCpuModels() { const brand = document.getElementById('cpuBrand').value; const sel = document.getElementById('cpuModel'); sel.innerHTML = '<option value="">-- Modèle --</option>'; if(dbModelesCpu[brand]) dbModelesCpu[brand].forEach(m => sel.innerHTML += `<option value="${m}">${m}</option>`); }
     function showSaveIndicator() { const s = document.getElementById('saveMsg'); s.style.display='block'; setTimeout(()=>s.style.display='none', 1000); }
 </script>
+<datalist id="clientDatalist"></datalist>
+<div id="syncStatusBadge" style="position:fixed; top:10px; left:50%; transform:translateX(-50%); background:#27ae60; color:white; padding:8px 16px; border-radius:20px; font-size:0.85em; font-weight:bold; z-index:4000; display:none; box-shadow:0 3px 10px rgba(0,0,0,0.25); max-width:90%; text-align:center;"></div>
 </body>
 </html>
