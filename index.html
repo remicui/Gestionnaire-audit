@@ -1167,6 +1167,7 @@
     function updateFeedbackBadge() {
         const badge = document.getElementById('feedbackBadgeCount');
         if (!badge) return;
+        if (localStorage.getItem('isFeedbackAdmin') !== 'true') { badge.style.display = 'none'; return; }
         const lastSeen = parseInt(localStorage.getItem('lastSeenFeedbackTimestamp') || '0', 10);
         const count = getFeedbackList().filter(f => f.timestamp > lastSeen).length;
         if (count > 0) {
@@ -1225,12 +1226,18 @@
                 <button type="button" style="flex:1; background:#95a5a6; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;" onclick="document.getElementById('feedbackOverlay').remove()">Fermer</button>
             </div>
             <div id="fbConfirmMsg" style="display:none; color:#27ae60; font-weight:bold; text-align:center; margin-bottom:16px;">✅ Merci, c'est envoyé !</div>
-            <h4 style="color:var(--bleu-nuit-soft); border-top:1px solid #eee; padding-top:16px; margin-bottom:8px;">Historique</h4>
-            <div id="fbList"></div>
+            <div id="fbHistorySection" style="display:none;">
+                <h4 style="color:var(--bleu-nuit-soft); border-top:1px solid #eee; padding-top:16px; margin-bottom:8px;">Historique (mode admin)</h4>
+                <div id="fbList"></div>
+            </div>
         `;
         overlay.appendChild(box);
         document.body.appendChild(overlay);
         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        if (localStorage.getItem('isFeedbackAdmin') === 'true') {
+            document.getElementById('fbHistorySection').style.display = 'block';
+        }
 
         ['fbTypeBug', 'fbTypeIdea'].forEach(id => document.getElementById(id).addEventListener('change', updateFeedbackTypeStyle));
         updateFeedbackTypeStyle();
@@ -1283,12 +1290,59 @@
         container.innerHTML = list.map(item => {
             const icon = item.type === 'bug' ? '🐛' : '💡';
             const date = new Date(item.timestamp).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-            const safeDesc = String(item.description || '').replace(/</g, '&lt;');
-            return `<div style="border-bottom:1px solid #eee; padding:10px 0;">
-                <div style="font-weight:bold;">${icon} ${safeDesc}</div>
+            const raw = String(item.description || '');
+            const shortTitle = (raw.length > 45 ? raw.slice(0, 45) + '…' : raw).replace(/</g, '&lt;');
+            return `<div style="border-bottom:1px solid #eee; padding:10px 0; cursor:pointer;" onclick="showFeedbackDetail('${item.id}')">
+                <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} ${shortTitle}</div>
                 <div style="font-size:0.8em; color:#999;">${item.name || 'Anonyme'} — ${date}</div>
             </div>`;
         }).join('');
+    }
+
+    function showFeedbackDetail(id) {
+        const item = getFeedbackList().find(f => f.id === id);
+        if (!item) return;
+        const old = document.getElementById('feedbackDetailOverlay');
+        if (old) old.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'feedbackDetailOverlay';
+        overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:6000; display:flex; align-items:center; justify-content:center; padding:16px;';
+
+        const icon = item.type === 'bug' ? '🐛 Bug' : '💡 Idée';
+        const date = new Date(item.timestamp).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const safeDesc = String(item.description || '').replace(/</g, '&lt;');
+        const isAdmin = localStorage.getItem('isFeedbackAdmin') === 'true';
+
+        const box = document.createElement('div');
+        box.style.cssText = 'background:white; border-radius:12px; max-width:500px; width:100%; max-height:80vh; overflow-y:auto; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.4);';
+        box.innerHTML = `
+            <h3 style="color:var(--bleu-nuit-soft); margin-top:0;">${icon}</h3>
+            <p style="white-space:pre-wrap; line-height:1.5; word-break:break-word;">${safeDesc}</p>
+            <p style="font-size:0.85em; color:#999;">${item.name || 'Anonyme'} — ${date}</p>
+            <div style="display:flex; gap:10px; margin-top:16px;">
+                ${isAdmin ? `<button type="button" style="flex:1; background:#c0392b; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;" onclick="deleteFeedbackItem('${item.id}')">🗑️ Supprimer</button>` : ''}
+                <button type="button" style="flex:1; background:#95a5a6; color:white; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold;" onclick="document.getElementById('feedbackDetailOverlay').remove()">Fermer</button>
+            </div>
+        `;
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    }
+
+    function deleteFeedbackItem(id) {
+        if (!confirm('Supprimer définitivement ce signalement ?')) return;
+        const list = getFeedbackList().filter(f => f.id !== id);
+        localStorage.setItem('feedbackList', JSON.stringify(list));
+        if (fbDb) {
+            fbDb.collection('feedback').doc(id).delete().catch((err) => {
+                console.warn('Suppression du signalement (cloud) impossible :', err.message || err);
+            });
+        }
+        const detail = document.getElementById('feedbackDetailOverlay');
+        if (detail) detail.remove();
+        renderFeedbackList();
+        updateFeedbackBadge();
     }
 
     const dbTechInfo = {
@@ -1310,11 +1364,24 @@
         }
     }
 
+    // Active le mode admin (voir + supprimer les signalements) uniquement sur les appareils qui
+    // ont ouvert l'app une fois avec ce lien spécial : index.html?admin=bechameiladmin26
+    // La permission reste ensuite mémorisée sur cet appareil (pas besoin de retaper le lien).
+    function checkFeedbackAdminAccess() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('admin') === 'bechameiladmin26') {
+                localStorage.setItem('isFeedbackAdmin', 'true');
+            }
+        } catch (e) { /* ignore */ }
+    }
+
     function initApp() {
         cleanHistory(); populateCpuBrands(); updateHistoryList(); initTooltips(); initSignaturePad(); initFirebaseSync();
         refreshClientDatalist();
         attachClientAutocomplete('y_client_int', { adresse: 'y_adresse_int', contact: 'y_contact', tel: 'y_tel' });
         attachClientAutocomplete('g_client_int', { adresse: 'g_adresse_int', contact: 'g_contact', tel: 'g_tel', email: 'g_email' });
+        checkFeedbackAdminAccess();
         updateFeedbackBadge();
         setTimeout(() => { const splash = document.getElementById('splashScreen'); if (splash) splash.remove(); }, 2900);
     }
