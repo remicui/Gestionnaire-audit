@@ -62,6 +62,7 @@
         .tech-folder-count { font-weight: normal; opacity: 0.85; }
         .tech-folder-list { padding: 4px 15px; background: #fafbfc; }
         .tech-folder-list .report-item:last-child { border-bottom: none; }
+        .status-badge { display: inline-block; color: white; font-size: 0.7em; font-weight: bold; padding: 3px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
         .report-info-main { font-size: 1.25em; font-weight: bold; color: #000; display: block; }
 
         .page { background: var(--blanc); padding: 40px; box-shadow: 0 5px 15px rgba(26, 58, 90, 0.1); border-radius: 8px; border-top: 10px solid var(--jaune-bechameil); }
@@ -411,7 +412,7 @@
         <div class="card">
             <h3 style="margin-top:0;">💬 BUGS & SUGGESTIONS</h3>
             <p style="color:#666; font-size:0.9em; margin-top:0;">Un problème avec l'app, ou une idée pour l'améliorer ? Fais-le remonter ici.</p>
-            <button class="btn-main" style="background:#8e44ad;" onclick="showFeedbackModal()">📝 SIGNALER UN BUG OU UNE IDÉE</button>
+            <button class="btn-main" style="background:#8e44ad; position:relative;" onclick="showFeedbackModal()">📝 SIGNALER UN BUG OU UNE IDÉE<span id="feedbackBadgeCount" style="display:none; position:absolute; top:-8px; right:-8px; background:#e74c3c; color:white; border-radius:50%; width:24px; height:24px; line-height:24px; font-size:0.8em; font-weight:bold;"></span></button>
         </div>
         
         <div class="card">
@@ -1001,23 +1002,30 @@
             console.warn('Écoute Firestore (clients) interrompue :', err.message || err);
         });
 
+        let feedbackFirstLoad = true;
         fbDb.collection('feedback').onSnapshot((snapshot) => {
             let changed = false;
             const list = getFeedbackList();
             const byId = {};
             list.forEach((item) => { byId[item.id] = item; });
+            const brandNewItems = [];
             snapshot.docChanges().forEach((change) => {
                 if (change.type === 'removed') {
                     if (byId[change.doc.id]) { delete byId[change.doc.id]; changed = true; }
                 } else {
+                    const isBrandNew = change.type === 'added' && !byId[change.doc.id] && !feedbackFirstLoad;
                     byId[change.doc.id] = change.doc.data();
                     changed = true;
+                    if (isBrandNew) brandNewItems.push(change.doc.data());
                 }
             });
+            feedbackFirstLoad = false;
             if (changed) {
                 localStorage.setItem('feedbackList', JSON.stringify(Object.values(byId)));
                 renderFeedbackList();
+                updateFeedbackBadge();
             }
+            brandNewItems.forEach(notifyNewFeedback);
         }, (err) => {
             console.warn('Écoute Firestore (feedback) interrompue :', err.message || err);
         });
@@ -1101,12 +1109,23 @@
         catch (e) { return {}; }
     }
 
+    // Recherche insensible à la casse/aux espaces ("Dupont", "dupont ", "Dupont  ") pour retrouver
+    // une entrée déjà existante du carnet, et éviter de créer une fiche client en double.
+    function findClientKey(dir, name) {
+        const norm = (name || '').trim().replace(/\s+/g, ' ').toLowerCase();
+        if (!norm) return null;
+        return Object.keys(dir).find(k => k.trim().replace(/\s+/g, ' ').toLowerCase() === norm) || null;
+    }
+
     function updateClientDirectory(name, info) {
         if (!name || !name.trim()) return;
+        const trimmed = name.trim().replace(/\s+/g, ' ');
         const dir = getClientDirectory();
-        dir[name.trim()] = info;
+        const existingKey = findClientKey(dir, trimmed);
+        const key = existingKey || trimmed; // conserve la casse utilisée la toute première fois
+        dir[key] = info;
         localStorage.setItem('clientDirectory', JSON.stringify(dir));
-        cloudSaveClientDirectory(name.trim(), info);
+        cloudSaveClientDirectory(key, info);
         refreshClientDatalist();
     }
 
@@ -1132,11 +1151,12 @@
         if (!nameField) return;
         nameField.addEventListener('change', () => {
             const dir = getClientDirectory();
-            const info = dir[nameField.value.trim()];
+            const key = findClientKey(dir, nameField.value);
+            const info = key ? dir[key] : null;
             if (!info) return;
-            Object.keys(fields).forEach((key) => {
-                const el = document.getElementById(fields[key]);
-                if (el && !el.value) el.value = info[key] || '';
+            Object.keys(fields).forEach((k) => {
+                const el = document.getElementById(fields[k]);
+                if (el && !el.value) el.value = info[k] || '';
             });
         });
     }
@@ -1174,9 +1194,44 @@
         });
     }
 
+    // Pastille rouge sur le bouton d'accueil = nombre de signalements pas encore consultés.
+    function updateFeedbackBadge() {
+        const badge = document.getElementById('feedbackBadgeCount');
+        if (!badge) return;
+        const lastSeen = parseInt(localStorage.getItem('lastSeenFeedbackTimestamp') || '0', 10);
+        const count = getFeedbackList().filter(f => f.timestamp > lastSeen).length;
+        if (count > 0) {
+            badge.textContent = count > 9 ? '9+' : String(count);
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // Notification navigateur (uniquement pendant que l'app est ouverte, pas de notification
+    // "en arrière-plan" — ça nécessiterait un serveur payant). Permission demandée en douceur,
+    // sans bloquer l'utilisateur si elle est refusée ou indisponible sur l'appareil.
+    function requestFeedbackNotificationPermission() {
+        if (typeof Notification === 'undefined') return;
+        if (Notification.permission === 'default') {
+            Notification.requestPermission().catch(() => {});
+        }
+    }
+
+    function notifyNewFeedback(item) {
+        if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+        const icon = item.type === 'bug' ? '🐛 Nouveau bug signalé' : '💡 Nouvelle idée proposée';
+        try {
+            new Notification(icon, { body: `${item.name || 'Anonyme'} : ${item.description}` });
+        } catch (e) { /* certains navigateurs mobiles ne supportent pas new Notification() directement */ }
+    }
+
     function showFeedbackModal() {
         const old = document.getElementById('feedbackOverlay');
         if (old) old.remove();
+        localStorage.setItem('lastSeenFeedbackTimestamp', String(Date.now()));
+        updateFeedbackBadge();
+        requestFeedbackNotificationPermission();
 
         const overlay = document.createElement('div');
         overlay.id = 'feedbackOverlay';
@@ -1291,6 +1346,7 @@
         refreshClientDatalist();
         attachClientAutocomplete('y_client_int', { adresse: 'y_adresse_int', contact: 'y_contact', tel: 'y_tel' });
         attachClientAutocomplete('g_client_int', { adresse: 'g_adresse_int', contact: 'g_contact', tel: 'g_tel', email: 'g_email' });
+        updateFeedbackBadge();
         setTimeout(() => { const splash = document.getElementById('splashScreen'); if (splash) splash.remove(); }, 2000);
     }
 
@@ -1315,6 +1371,22 @@
     }
 
     function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id === 'home') updateHistoryList(); }
+
+    // ---------- STATUT DE FICHE (calculé automatiquement) ----------
+    function computeFicheStatus(canvas, clientValue, mainFieldValue) {
+        if (canvas && canvas.dataset.hasDrawing === 'true') return 'signee';
+        if ((clientValue || '').trim() && (mainFieldValue || '').trim()) return 'terminee';
+        return 'brouillon';
+    }
+    function statusBadgeHtml(status) {
+        const map = {
+            brouillon: { label: 'Brouillon', color: '#95a5a6' },
+            terminee: { label: 'Terminée', color: '#2c527a' },
+            signee: { label: 'Signée', color: '#27ae60' }
+        };
+        const s = map[status] || map.brouillon;
+        return `<span class="status-badge" style="background:${s.color};">${s.label}</span>`;
+    }
 
     function updateHistoryList() {
         const container = document.getElementById('historyList'); container.innerHTML = '';
@@ -1371,7 +1443,7 @@
                 const exportFn = isYaskawa ? `exportYaskawaReport('${a.id}')` : (isGeneric ? `exportGenericReport('${a.id}')` : `exportAuditDirect('${a.id}')`);
                 const d = document.createElement('div');
                 d.className = 'report-item';
-                d.innerHTML = `<div style="flex:1;"><span class="report-info-main">${icon}${a.machine}</span><span style="color:#2c527a; font-weight:bold;">🏢 ${a.client}</span></div>
+                d.innerHTML = `<div style="flex:1;"><span class="report-info-main">${icon}${a.machine}${a.status ? statusBadgeHtml(a.status) : ''}</span><span style="color:#2c527a; font-weight:bold;">🏢 ${a.client}</span></div>
                 <div style="display:flex; gap:8px;">
                     <button class="btn-add" style="background:var(--bleu-accent); padding:8px 12px; font-size:0.8em;" onclick="${loadFn}">📂 OUVRIR</button>
                     <button class="btn-add" style="background:#2c527a; padding:8px 12px; font-size:0.8em;" onclick="${exportFn}">💾 EXPORT</button>
@@ -1579,6 +1651,7 @@
             client: document.getElementById('y_client_int').value || "Société Inconnue",
             machine: document.getElementById('y_objet').value || ('Fiche N° ' + (document.getElementById('y_ficheNum').value || id)),
             technicien: (document.getElementById('y_technicien').value || '').trim(),
+            status: computeFicheStatus(canvas, document.getElementById('y_client_int').value, document.getElementById('y_objet').value),
             inputs: Array.from(document.querySelectorAll('#yaskawaForm input, #yaskawaForm textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
             signature: canvas.dataset.hasDrawing === 'true' ? canvas.toDataURL('image/png') : null
         };
@@ -1844,6 +1917,7 @@
             client: document.getElementById('g_client_int').value || "Société Inconnue",
             machine: document.getElementById('g_machines').value || ('Fiche N° ' + (document.getElementById('g_ficheNum').value || id)),
             technicien: (document.getElementById('g_technicien').value || '').trim(),
+            status: computeFicheStatus(canvas, document.getElementById('g_client_int').value, document.getElementById('g_rapport').value),
             inputs: Array.from(document.querySelectorAll('#genericForm input, #genericForm textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
             signature: canvas.dataset.hasDrawing === 'true' ? canvas.toDataURL('image/png') : null
         };
