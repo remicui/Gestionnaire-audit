@@ -957,12 +957,20 @@
     }
 
     // ---------- NUMÉROTATION AUTOMATIQUE DES FICHES ----------
-    // Compteur partagé dans le cloud (toutes les fiches YASKAWA + génériques partagent la même
-    // séquence, comme sur le papier). En cas d'absence de connexion, repli sur un compteur local.
-    async function getNextFicheNumber() {
+    // Format : AAMM-L-NNN (année+mois, lettre du type, numéro séquentiel).
+    // Le numéro NNN est propre à chaque type (Y=Yaskawa, G=Générique) et ne repart à 1
+    // qu'au changement d'année (pas chaque mois). Compteur partagé dans le cloud ; en cas
+    // d'absence de connexion, repli sur un compteur local (numéro suffixé d'un '*' à vérifier).
+    async function getNextFicheNumber(typeLetter) {
+        const now = new Date();
+        const yy = String(now.getFullYear()).slice(-2);
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const counterKey = `${now.getFullYear()}_${typeLetter}`;
+        const localKey = 'lastFicheNumber_' + counterKey;
+
         if (fbDb && fbReady) {
             try {
-                const counterRef = fbDb.collection('counters').doc('fiche');
+                const counterRef = fbDb.collection('counters').doc(counterKey);
                 const newNum = await fbDb.runTransaction(async (t) => {
                     const doc = await t.get(counterRef);
                     const current = doc.exists ? (doc.data().value || 0) : 0;
@@ -970,16 +978,16 @@
                     t.set(counterRef, { value: next }, { merge: true });
                     return next;
                 });
-                localStorage.setItem('lastFicheNumber', String(newNum));
-                return String(newNum).padStart(4, '0');
+                localStorage.setItem(localKey, String(newNum));
+                return `${yy}${mm}-${typeLetter}-${String(newNum).padStart(3, '0')}`;
             } catch (err) {
                 console.warn('Numérotation cloud impossible, repli local :', err.message || err);
             }
         }
-        const last = parseInt(localStorage.getItem('lastFicheNumber') || '0', 10);
+        const last = parseInt(localStorage.getItem(localKey) || '0', 10);
         const next = last + 1;
-        localStorage.setItem('lastFicheNumber', String(next));
-        return String(next).padStart(4, '0') + '*'; // '*' signale un numéro attribué hors-ligne (à vérifier)
+        localStorage.setItem(localKey, String(next));
+        return `${yy}${mm}-${typeLetter}-${String(next).padStart(3, '0')}*`; // '*' = attribué hors-ligne, à vérifier
     }
 
     // ---------- CARNET D'ADRESSES CLIENT (auto-complétion) ----------
@@ -1293,7 +1301,7 @@
         document.getElementById('y_ficheNum').value = '…';
         clearSignature();
         showView('yaskawa-view');
-        getNextFicheNumber().then((num) => {
+        getNextFicheNumber('Y').then((num) => {
             if (document.getElementById('currentYaskawaId').value === id) {
                 document.getElementById('y_ficheNum').value = num;
                 saveYaskawaReport();
@@ -1545,7 +1553,7 @@
         document.getElementById('g_ficheNum').value = '…';
         clearSignatureGeneric();
         showView('generic-view');
-        getNextFicheNumber().then((num) => {
+        getNextFicheNumber('G').then((num) => {
             if (document.getElementById('currentGenericId').value === id) {
                 document.getElementById('g_ficheNum').value = num;
                 saveGenericReport();
