@@ -375,9 +375,11 @@
         </div>
 
         <div class="card">
-            <h3 style="margin-top:0;">📊 TABLEAU DE BORD</h3>
-            <p style="color:#666; font-size:0.9em; margin-top:0;">Statistiques sur toutes tes interventions : volumes, techniciens, clients, tendances.</p>
-            <button class="btn-main" style="background:#16a085;" onclick="showDashboard()">📊 VOIR LES STATISTIQUES</button>
+            <h3 style="margin-top:0;">📊 TABLEAU DE BORD & OUTILS</h3>
+            <p style="color:#666; font-size:0.9em; margin-top:0;">Statistiques, historique client, pièces à commander.</p>
+            <button class="btn-main" style="background:#16a085; margin-bottom:10px;" onclick="showDashboard()">📊 VOIR LES STATISTIQUES</button>
+            <button class="btn-main" style="background:#2c527a; margin-bottom:10px;" onclick="showClientHistory()">🏢 HISTORIQUE CLIENT</button>
+            <button class="btn-main" style="background:#e67e22;" onclick="showPiecesACommander()">🔧 PIÈCES À COMMANDER</button>
         </div>
 
         <div class="card">
@@ -411,6 +413,27 @@
                 <button style="background:#95a5a6; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold;" onclick="showView('home')">🏠 RETOUR</button>
             </div>
             <div id="dashboardContent"></div>
+        </div>
+    </div>
+
+    <div id="client-history-view" class="view">
+        <div class="card" style="max-width:900px; margin:0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0;">🏢 HISTORIQUE CLIENT</h3>
+                <button style="background:#95a5a6; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold;" onclick="showView('home')">🏠 RETOUR</button>
+            </div>
+            <div id="clientHistoryContent"></div>
+        </div>
+    </div>
+
+    <div id="pieces-view" class="view">
+        <div class="card" style="max-width:900px; margin:0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0;">🔧 PIÈCES À COMMANDER</h3>
+                <button style="background:#95a5a6; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold;" onclick="showView('home')">🏠 RETOUR</button>
+            </div>
+            <p style="color:#666; font-size:0.9em;">Consolidation de toutes les pièces cochées "À commander" sur les fiches d'intervention génériques.</p>
+            <div id="piecesContent"></div>
         </div>
     </div>
 
@@ -1566,6 +1589,145 @@
                 ${barList(sortEntries(stats.byClient), 8)}
             </div>
         `;
+    }
+
+    // ---------- HISTORIQUE CLIENT ----------
+    function normalizeName(s) { return (s || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
+
+    function showClientHistory() {
+        showView('client-history-view');
+        renderClientHistorySelector();
+    }
+
+    function renderClientHistorySelector() {
+        const container = document.getElementById('clientHistoryContent');
+        if (!container) return;
+        const fiches = getAllFichesForStats();
+        const clientsMap = {};
+        fiches.forEach(f => {
+            const norm = normalizeName(f.client);
+            if (norm && !clientsMap[norm]) clientsMap[norm] = f.client;
+        });
+        const clientNames = Object.values(clientsMap).sort((a, b) => a.localeCompare(b, 'fr'));
+
+        container.innerHTML = `
+            <input type="text" id="clientHistorySearch" list="clientHistoryDatalist" placeholder="Tape ou choisis un client..." style="width:100%; padding:12px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; margin-bottom:16px; font-size:1em;" oninput="renderClientHistoryResults()">
+            <datalist id="clientHistoryDatalist">${clientNames.map(n => `<option value="${n.replace(/"/g, '&quot;')}"></option>`).join('')}</datalist>
+            <div id="clientHistoryResults"></div>
+        `;
+    }
+
+    function renderClientHistoryResults() {
+        const input = document.getElementById('clientHistorySearch');
+        const results = document.getElementById('clientHistoryResults');
+        if (!input || !results) return;
+        const query = normalizeName(input.value);
+        if (!query) { results.innerHTML = ''; return; }
+        const fiches = getAllFichesForStats().filter(f => normalizeName(f.client) === query);
+        if (fiches.length === 0) {
+            results.innerHTML = '<p style="color:#999;">Aucune fiche trouvée pour ce client. Vérifie l\'orthographe, ou choisis dans la liste de suggestions.</p>';
+            return;
+        }
+        fiches.sort((a, b) => b.timestamp - a.timestamp);
+        const machines = [...new Set(fiches.map(f => f.machine).filter(Boolean))];
+
+        results.innerHTML = `
+            <div class="card" style="background:#f7f9fb;">
+                <strong>${fiches.length} intervention(s)</strong> chez <strong>${input.value.replace(/</g, '&lt;')}</strong>
+                ${machines.length ? `<div style="margin-top:8px; font-size:0.9em; color:#555;">Machines / objets rencontrés : ${machines.slice(0, 6).map(m => String(m).replace(/</g, '&lt;')).join(' • ')}${machines.length > 6 ? '…' : ''}</div>` : ''}
+            </div>
+            <div style="margin-top:12px;">
+            ${fiches.map(f => {
+                const isYaskawa = f.id.startsWith('yaskawa_');
+                const isGeneric = f.id.startsWith('generic_');
+                const icon = isYaskawa ? '🔧' : (isGeneric ? '📋' : '🛠️');
+                const loadFn = isYaskawa ? `loadYaskawaReport('${f.id}')` : (isGeneric ? `loadGenericReport('${f.id}')` : `loadReport('${f.id}')`);
+                const date = new Date(f.timestamp).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                return `<div class="report-item">
+                    <div style="flex:1;">
+                        <span class="report-info-main">${icon} ${String(f.machine || '').replace(/</g, '&lt;')}${f.status ? statusBadgeHtml(f.status) : ''}</span>
+                        <span style="color:#666; font-size:0.85em;">${date}${f.technicien ? ' — 👷 ' + String(f.technicien).replace(/</g, '&lt;') : ''}</span>
+                    </div>
+                    <button class="btn-add" style="background:var(--bleu-accent);" onclick="${loadFn}">📂 OUVRIR</button>
+                </div>`;
+            }).join('')}
+            </div>
+        `;
+    }
+
+    // ---------- PIÈCES À COMMANDER (consolidation) ----------
+    function extractPiecesACommander(fiche) {
+        if (!fiche.id || !fiche.id.startsWith('generic_') || !Array.isArray(fiche.inputs)) return [];
+        const map = {};
+        fiche.inputs.forEach(i => { map[i.id] = i.val; });
+        const pieces = [];
+        for (let n = 1; n <= 5; n++) {
+            const commande = map['g_piece_commande_' + n];
+            const libelle = map['g_piece_libelle_' + n];
+            const ref = map['g_piece_ref_' + n];
+            if (commande && ((libelle && libelle.trim()) || (ref && ref.trim()))) {
+                pieces.push({ libelle: (libelle || '').trim() || '(sans libellé)', ref: (ref || '').trim(), client: fiche.client, machine: fiche.machine, ficheId: fiche.id });
+            }
+        }
+        return pieces;
+    }
+
+    function computePiecesACommander() {
+        const fiches = getAllFichesForStats().filter(f => f.id && f.id.startsWith('generic_'));
+        let all = [];
+        fiches.forEach(f => { all = all.concat(extractPiecesACommander(f)); });
+        return all;
+    }
+
+    function showPiecesACommander() {
+        showView('pieces-view');
+        renderPiecesACommander();
+    }
+
+    function renderPiecesACommander() {
+        const container = document.getElementById('piecesContent');
+        if (!container) return;
+        const pieces = computePiecesACommander();
+        if (pieces.length === 0) {
+            container.innerHTML = '<p style="color:#999;">Aucune pièce à commander pour le moment.</p>';
+            window._piecesCopyText = '';
+            return;
+        }
+        const groups = {};
+        pieces.forEach(p => {
+            const key = (p.libelle.toLowerCase() + '|' + p.ref.toLowerCase());
+            if (!groups[key]) groups[key] = { libelle: p.libelle, ref: p.ref, count: 0, occurrences: [] };
+            groups[key].count++;
+            groups[key].occurrences.push(p);
+        });
+        const groupList = Object.values(groups).sort((a, b) => b.count - a.count);
+        window._piecesCopyText = groupList.map(g => `- ${g.libelle}${g.ref ? ' (Réf: ' + g.ref + ')' : ''} — x${g.count}`).join('\n');
+
+        container.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                <div><strong>${groupList.length}</strong> pièce(s) distincte(s) à commander (${pieces.length} au total)</div>
+                <button class="btn-main" style="background:#27ae60; width:auto; padding:10px 16px;" onclick="copyPiecesList()">📋 Copier la liste</button>
+            </div>
+            ${groupList.map(g => `
+                <div class="card" style="margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div><strong>${g.libelle.replace(/</g, '&lt;')}</strong>${g.ref ? ' <span style="color:#666;">(Réf: ' + g.ref.replace(/</g, '&lt;') + ')</span>' : ''}</div>
+                        <span class="status-badge" style="background:var(--bleu-accent);">x${g.count}</span>
+                    </div>
+                    <div style="margin-top:8px; font-size:0.85em; color:#666;">
+                        ${g.occurrences.map(o => `🏢 ${String(o.client || '').replace(/</g, '&lt;')} — ${String(o.machine || '').replace(/</g, '&lt;')} <a href="#" onclick="loadGenericReport('${o.ficheId}'); return false;" style="color:var(--bleu-accent);">(voir la fiche)</a>`).join('<br>')}
+                    </div>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    function copyPiecesList() {
+        const text = window._piecesCopyText || '';
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => alert('Liste copiée dans le presse-papiers !')).catch(() => {
+            alert("Impossible de copier automatiquement. Voici la liste :\n\n" + text);
+        });
     }
 
     function updateHistoryList() {
