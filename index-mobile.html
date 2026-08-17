@@ -410,6 +410,12 @@
         </div>
 
         <div class="card">
+            <h3 style="margin-top:0;">📊 TABLEAU DE BORD</h3>
+            <p style="color:#666; font-size:0.9em; margin-top:0;">Statistiques sur toutes tes interventions : volumes, techniciens, clients, tendances.</p>
+            <button class="btn-main" style="background:#16a085;" onclick="showDashboard()">📊 VOIR LES STATISTIQUES</button>
+        </div>
+
+        <div class="card">
             <h3 style="margin-top:0;">💬 BUGS & SUGGESTIONS</h3>
             <p style="color:#666; font-size:0.9em; margin-top:0;">Un problème avec l'app, ou une idée pour l'améliorer ? Fais-le remonter ici.</p>
             <button class="btn-main" style="background:#8e44ad; position:relative;" onclick="showFeedbackModal()">📝 SIGNALER UN BUG OU UNE IDÉE<span id="feedbackBadgeCount" style="display:none; position:absolute; top:-8px; right:-8px; background:#e74c3c; color:white; border-radius:50%; width:24px; height:24px; line-height:24px; font-size:0.8em; font-weight:bold;"></span></button>
@@ -426,6 +432,16 @@
                 <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAudit(this)">
                 <button class="btn-main" style="background:#27ae60; font-size: 0.9em; padding: 12px;" onclick="document.getElementById('importFile').click()">📤 IMPORTER UN FICHIER JSON</button>
             </div>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="view">
+        <div class="card" style="max-width:1000px; margin:0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0;">📊 TABLEAU DE BORD</h3>
+                <button style="background:#95a5a6; color:white; border:none; padding:10px 16px; border-radius:5px; cursor:pointer; font-weight:bold;" onclick="showView('home')">🏠 RETOUR</button>
+            </div>
+            <div id="dashboardContent"></div>
         </div>
     </div>
 
@@ -1453,6 +1469,140 @@
         };
         const s = map[status] || map.brouillon;
         return `<span class="status-badge" style="background:${s.color};">${s.label}</span>`;
+    }
+
+    // ---------- TABLEAU DE BORD ----------
+    function getAllFichesForStats() {
+        const fiches = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith('audit_') || key.startsWith('yaskawa_') || key.startsWith('generic_'))) {
+                try { fiches.push(JSON.parse(localStorage.getItem(key))); } catch (e) { /* ignore fiche corrompue */ }
+            }
+        }
+        return fiches;
+    }
+
+    function computeDashboardStats() {
+        const fiches = getAllFichesForStats();
+        const now = new Date();
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+        const stats = {
+            total: fiches.length,
+            thisMonth: 0,
+            byType: {},
+            byTechnicien: {},
+            byStatus: { brouillon: 0, terminee: 0, signee: 0, autre: 0 },
+            byClient: {},
+            monthly: {}
+        };
+        fiches.forEach(f => {
+            if (f.timestamp >= thisMonthStart) stats.thisMonth++;
+
+            let typeLabel = 'Audit';
+            if (f.id && f.id.startsWith('yaskawa_')) typeLabel = 'YASKAWA';
+            else if (f.id && f.id.startsWith('generic_')) typeLabel = 'Fiche générique';
+            stats.byType[typeLabel] = (stats.byType[typeLabel] || 0) + 1;
+
+            const tech = (f.technicien && f.technicien.trim()) ? f.technicien.trim() : 'Non renseigné';
+            stats.byTechnicien[tech] = (stats.byTechnicien[tech] || 0) + 1;
+
+            const status = stats.byStatus.hasOwnProperty(f.status) ? f.status : 'autre';
+            stats.byStatus[status]++;
+
+            const client = f.client || 'Inconnu';
+            stats.byClient[client] = (stats.byClient[client] || 0) + 1;
+
+            if (f.timestamp) {
+                const d = new Date(f.timestamp);
+                const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                stats.monthly[key] = (stats.monthly[key] || 0) + 1;
+            }
+        });
+        return stats;
+    }
+
+    function showDashboard() {
+        showView('dashboard-view');
+        renderDashboard();
+    }
+
+    function renderDashboard() {
+        const stats = computeDashboardStats();
+        const container = document.getElementById('dashboardContent');
+        if (!container) return;
+
+        const sortEntries = (obj) => Object.entries(obj).sort((a, b) => b[1] - a[1]);
+        const barList = (entries, max) => {
+            if (entries.length === 0) return '<p style="color:#999; font-size:0.9em;">Pas encore de données.</p>';
+            const topMax = Math.max(1, entries[0][1]);
+            return entries.slice(0, max).map(([label, count]) => {
+                const pct = Math.round((count / topMax) * 100);
+                return `<div style="margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.9em; margin-bottom:3px;"><span>${String(label).replace(/</g, '&lt;')}</span><span style="font-weight:bold;">${count}</span></div>
+                    <div style="background:#eee; border-radius:4px; height:8px; overflow:hidden;"><div style="width:${pct}%; height:100%; background:var(--bleu-accent);"></div></div>
+                </div>`;
+            }).join('');
+        };
+
+        const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        const now = new Date();
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            months.push({ label: monthNames[d.getMonth()], count: stats.monthly[key] || 0 });
+        }
+        const maxMonthly = Math.max(1, ...months.map(m => m.count));
+        const monthlyChart = `<div style="display:flex; align-items:flex-end; gap:10px; height:130px; padding:10px 4px;">
+            ${months.map(m => `<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;">
+                <div style="font-size:0.8em; font-weight:bold; margin-bottom:4px;">${m.count}</div>
+                <div style="width:100%; background:var(--bleu-accent); border-radius:4px 4px 0 0; height:${Math.max(4, (m.count / maxMonthly) * 90)}px;"></div>
+                <div style="font-size:0.78em; color:#666; margin-top:4px;">${m.label}</div>
+            </div>`).join('')}
+        </div>`;
+
+        container.innerHTML = `
+            <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:24px;">
+                <div style="flex:1; min-width:130px; background:var(--bleu-nuit-soft); color:white; padding:20px; border-radius:10px; text-align:center;">
+                    <div style="font-size:2em; font-weight:bold;">${stats.total}</div>
+                    <div style="font-size:0.85em; opacity:0.9;">Fiches au total</div>
+                </div>
+                <div style="flex:1; min-width:130px; background:var(--bleu-accent); color:white; padding:20px; border-radius:10px; text-align:center;">
+                    <div style="font-size:2em; font-weight:bold;">${stats.thisMonth}</div>
+                    <div style="font-size:0.85em; opacity:0.9;">Ce mois-ci</div>
+                </div>
+                <div style="flex:1; min-width:130px; background:#27ae60; color:white; padding:20px; border-radius:10px; text-align:center;">
+                    <div style="font-size:2em; font-weight:bold;">${stats.byStatus.signee}</div>
+                    <div style="font-size:0.85em; opacity:0.9;">Signées</div>
+                </div>
+                <div style="flex:1; min-width:130px; background:#95a5a6; color:white; padding:20px; border-radius:10px; text-align:center;">
+                    <div style="font-size:2em; font-weight:bold;">${stats.byStatus.brouillon}</div>
+                    <div style="font-size:0.85em; opacity:0.9;">Brouillons</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;">📈 Interventions des 6 derniers mois</h3>
+                ${monthlyChart}
+            </div>
+
+            <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                <div class="card" style="flex:1; min-width:260px;">
+                    <h3 style="margin-top:0;">🗂️ Par type de fiche</h3>
+                    ${barList(sortEntries(stats.byType), 10)}
+                </div>
+                <div class="card" style="flex:1; min-width:260px;">
+                    <h3 style="margin-top:0;">👷 Par technicien</h3>
+                    ${barList(sortEntries(stats.byTechnicien), 8)}
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;">🏢 Clients les plus fréquents</h3>
+                ${barList(sortEntries(stats.byClient), 8)}
+            </div>
+        `;
     }
 
     function updateHistoryList() {
