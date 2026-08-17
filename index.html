@@ -43,6 +43,14 @@
         .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--bleu-accent); }
 
         .report-item { border-bottom: 1px solid var(--gris-clair); padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
+        .tech-folder { margin-bottom: 12px; border: 1px solid var(--bleu-fond); border-radius: 8px; overflow: hidden; }
+        .tech-folder-summary { cursor: pointer; padding: 12px 16px; background: var(--bleu-nuit-soft); color: white; font-weight: bold; display: flex; align-items: center; gap: 8px; user-select: none; }
+        .tech-folder-summary::-webkit-details-marker { display: none; }
+        .tech-folder-summary::before { content: '▶'; display: inline-block; transition: transform 0.2s; font-size: 0.8em; }
+        details[open] > .tech-folder-summary::before { transform: rotate(90deg); }
+        .tech-folder-count { font-weight: normal; opacity: 0.85; }
+        .tech-folder-list { padding: 4px 15px; background: #fafbfc; }
+        .tech-folder-list .report-item:last-child { border-bottom: none; }
         .report-info-main { font-size: 1.25em; font-weight: bold; color: #000; display: block; }
 
         .page { background: var(--blanc); padding: 40px; box-shadow: 0 5px 15px rgba(26, 58, 90, 0.1); border-radius: 8px; border-top: 10px solid var(--jaune-bechameil); }
@@ -361,7 +369,7 @@
                     <label>Client / Site :</label> <input type="text" id="clientName" style="width:60%"><br><br>
                     <label>Adresse :</label> <input type="text" id="clientAddress" style="width:60%" placeholder="N°, Rue, CP, Ville"><br><br>
                     <label>Machine / Repère :</label> <input type="text" id="machineName" style="width:60%"><br><br>
-                    <label>Chargé d'Affaires :</label> <input type="text" id="expertName" style="width:60%" value="Expert BECHAMEIL">
+                    <label>Technicien :</label> <input type="text" id="expertName" style="width:60%" list="technicienDatalist">
                 </div>
 
                 <h2>1. CONTRÔLE & COMMUNICATION (API)</h2>
@@ -498,7 +506,7 @@
                             <table class="y-table">
                                 <tr>
                                     <td class="y-label" style="width:22%;">Technicien(s)</td>
-                                    <td colspan="3"><input type="text" id="y_technicien"></td>
+                                    <td colspan="3"><input type="text" id="y_technicien" list="technicienDatalist"></td>
                                 </tr>
                                 <tr>
                                     <td class="y-label">Date d'intervention</td>
@@ -679,7 +687,7 @@
                             <table class="y-table">
                                 <tr>
                                     <td class="y-label" style="width:22%;">Technicien(s)</td>
-                                    <td colspan="3"><input type="text" id="g_technicien"></td>
+                                    <td colspan="3"><input type="text" id="g_technicien" list="technicienDatalist"></td>
                                 </tr>
                                 <tr>
                                     <td class="y-label">Stagiaire(s)</td>
@@ -1105,21 +1113,64 @@
             const key = localStorage.key(i);
             if (key.startsWith('audit_') || key.startsWith('yaskawa_') || key.startsWith('generic_')) audits.push(JSON.parse(localStorage.getItem(key)));
         }
-        audits.sort((a,b) => b.timestamp - a.timestamp).forEach(a => {
-            const isYaskawa = a.id.startsWith('yaskawa_');
-            const isGeneric = a.id.startsWith('generic_');
-            const icon = isYaskawa ? '🔧 ' : (isGeneric ? '📋 ' : '');
-            const loadFn = isYaskawa ? `loadYaskawaReport('${a.id}')` : (isGeneric ? `loadGenericReport('${a.id}')` : `loadReport('${a.id}')`);
-            const exportFn = isYaskawa ? `exportYaskawaReport('${a.id}')` : (isGeneric ? `exportGenericReport('${a.id}')` : `exportAuditDirect('${a.id}')`);
-            const d = document.createElement('div');
-            d.className = 'report-item';
-            d.innerHTML = `<div style="flex:1;"><span class="report-info-main">${icon}${a.machine}</span><span style="color:#2c527a; font-weight:bold;">🏢 ${a.client}</span></div>
-            <div style="display:flex; gap:8px;">
-                <button class="btn-add" style="background:var(--bleu-accent); padding:8px 12px; font-size:0.8em;" onclick="${loadFn}">📂 OUVRIR</button>
-                <button class="btn-add" style="background:#2c527a; padding:8px 12px; font-size:0.8em;" onclick="${exportFn}">💾 EXPORT</button>
-                <button class="btn-remove" onclick="if(confirm('Supprimer ?')){localStorage.removeItem('${a.id}');cloudDelete('${a.id}');updateHistoryList();}">❌</button>
-            </div>`;
-            container.appendChild(d);
+        audits.sort((a,b) => b.timestamp - a.timestamp);
+
+        // Regroupement par technicien (dossiers). Les fiches sans technicien renseigné — ou les
+        // audits classiques, qui n'ont pas ce champ — sont réunies dans "Sans technicien".
+        // Le regroupement tolère les différences de casse et d'espaces ("Rémi", "rémi ", "Rémi  ")
+        // pour éviter de créer un dossier séparé à cause d'une simple faute de frappe.
+        const groups = {};
+        const techNames = new Set();
+        audits.forEach(a => {
+            const raw = (a.technicien && a.technicien.trim()) ? a.technicien.trim().replace(/\s+/g, ' ') : '';
+            const key = raw ? raw.toLowerCase() : 'sans technicien';
+            const label = raw || 'Sans technicien';
+            if (!groups[key]) groups[key] = { label, items: [] };
+            groups[key].items.push(a);
+            if (raw) techNames.add(raw);
+        });
+        const techList = document.getElementById('technicienDatalist');
+        if (techList) {
+            techList.innerHTML = Array.from(techNames).sort((a, b) => a.localeCompare(b, 'fr'))
+                .map(n => `<option value="${n.replace(/"/g, '&quot;')}"></option>`).join('');
+        }
+        const folderKeys = Object.keys(groups).sort((a, b) => {
+            if (a === 'sans technicien') return 1;
+            if (b === 'sans technicien') return -1;
+            return groups[a].label.localeCompare(groups[b].label, 'fr');
+        });
+
+        folderKeys.forEach(key => {
+            const group = groups[key];
+            const details = document.createElement('details');
+            details.className = 'tech-folder';
+            details.open = folderKeys.length === 1;
+
+            const summary = document.createElement('summary');
+            summary.className = 'tech-folder-summary';
+            summary.innerHTML = `📁 ${group.label}`;
+            details.appendChild(summary);
+
+            const list = document.createElement('div');
+            list.className = 'tech-folder-list';
+            group.items.forEach(a => {
+                const isYaskawa = a.id.startsWith('yaskawa_');
+                const isGeneric = a.id.startsWith('generic_');
+                const icon = isYaskawa ? '🔧 ' : (isGeneric ? '📋 ' : '');
+                const loadFn = isYaskawa ? `loadYaskawaReport('${a.id}')` : (isGeneric ? `loadGenericReport('${a.id}')` : `loadReport('${a.id}')`);
+                const exportFn = isYaskawa ? `exportYaskawaReport('${a.id}')` : (isGeneric ? `exportGenericReport('${a.id}')` : `exportAuditDirect('${a.id}')`);
+                const d = document.createElement('div');
+                d.className = 'report-item';
+                d.innerHTML = `<div style="flex:1;"><span class="report-info-main">${icon}${a.machine}</span><span style="color:#2c527a; font-weight:bold;">🏢 ${a.client}</span></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-add" style="background:var(--bleu-accent); padding:8px 12px; font-size:0.8em;" onclick="${loadFn}">📂 OUVRIR</button>
+                    <button class="btn-add" style="background:#2c527a; padding:8px 12px; font-size:0.8em;" onclick="${exportFn}">💾 EXPORT</button>
+                    <button class="btn-remove" onclick="if(confirm('Supprimer ?')){localStorage.removeItem('${a.id}');cloudDelete('${a.id}');updateHistoryList();}">❌</button>
+                </div>`;
+                list.appendChild(d);
+            });
+            details.appendChild(list);
+            container.appendChild(details);
         });
     }
 
@@ -1220,6 +1271,7 @@
             id: id, type: document.getElementById('displayReportType').innerText, timestamp: Date.now(),
             client: document.getElementById('clientName').value || "Société Inconnue",
             machine: document.getElementById('machineName').value || "Machine non spécifiée",
+            technicien: (document.getElementById('expertName').value || '').trim(),
             inputs: Array.from(document.querySelectorAll('input:not([type="file"]), select, textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
             axeCount: document.querySelectorAll('.axe-container').length,
             ioCount: document.querySelector('#ioTable tbody').rows.length,
@@ -1316,6 +1368,7 @@
             id: id, type: 'INTERVENTION YASKAWA', timestamp: Date.now(),
             client: document.getElementById('y_client_int').value || "Société Inconnue",
             machine: document.getElementById('y_objet').value || ('Fiche N° ' + (document.getElementById('y_ficheNum').value || id)),
+            technicien: (document.getElementById('y_technicien').value || '').trim(),
             inputs: Array.from(document.querySelectorAll('#yaskawaForm input, #yaskawaForm textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
             signature: canvas.dataset.hasDrawing === 'true' ? canvas.toDataURL('image/png') : null
         };
@@ -1568,6 +1621,7 @@
             id: id, type: 'FICHE GENERIQUE', timestamp: Date.now(),
             client: document.getElementById('g_client_int').value || "Société Inconnue",
             machine: document.getElementById('g_machines').value || ('Fiche N° ' + (document.getElementById('g_ficheNum').value || id)),
+            technicien: (document.getElementById('g_technicien').value || '').trim(),
             inputs: Array.from(document.querySelectorAll('#genericForm input, #genericForm textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
             signature: canvas.dataset.hasDrawing === 'true' ? canvas.toDataURL('image/png') : null
         };
@@ -1785,6 +1839,7 @@
     function showSaveIndicator() { const s = document.getElementById('saveMsg'); s.style.display='block'; setTimeout(()=>s.style.display='none', 1000); }
 </script>
 <datalist id="clientDatalist"></datalist>
+<datalist id="technicienDatalist"></datalist>
 <div id="syncStatusBadge" style="position:fixed; top:10px; left:50%; transform:translateX(-50%); background:#27ae60; color:white; padding:8px 16px; border-radius:20px; font-size:0.85em; font-weight:bold; z-index:4000; display:none; box-shadow:0 3px 10px rgba(0,0,0,0.25);"></div>
 </body>
 </html>
