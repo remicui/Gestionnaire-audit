@@ -2449,8 +2449,23 @@
                 // Nettoyage propre pour le PDF final : pas de cadre visible autour de la signature,
                 // pas d'icônes natives horloge/calendrier, pas de bordures d'input, et masquage
                 // des éléments d'interface (bouton "Effacer") qui n'ont rien à faire sur le document.
-                const sig = clonedDoc.getElementById('y_signature');
-                if (sig) { sig.style.border = 'none'; sig.style.background = 'transparent'; sig.style.boxShadow = 'none'; }
+                // La zone de signature (élément <canvas>) est remplacée par une image figée aux
+                // dimensions exactes affichées à l'écran : plus fiable que de capturer le <canvas>
+                // en place, qui pouvait apparaître décalé selon les navigateurs.
+                const liveSig = document.getElementById('y_signature');
+                const clonedSig = clonedDoc.getElementById('y_signature');
+                if (liveSig && clonedSig) {
+                    const rect = liveSig.getBoundingClientRect();
+                    const img = clonedDoc.createElement('img');
+                    img.src = liveSig.toDataURL('image/png');
+                    img.style.width = rect.width + 'px';
+                    img.style.height = rect.height + 'px';
+                    img.style.display = 'block';
+                    img.style.border = 'none';
+                    img.style.background = 'transparent';
+                    img.style.margin = window.getComputedStyle(liveSig).margin;
+                    clonedSig.replaceWith(img);
+                }
                 clonedDoc.querySelectorAll('#yaskawa-view .no-print').forEach((el) => { el.style.display = 'none'; });
                 clonedDoc.querySelectorAll('#yaskawa-view .y-table input, #yaskawa-view .y-table textarea, #yaskawa-view .y-visa-nom-input').forEach((el) => {
                     if (el.type === 'checkbox') return;
@@ -2679,8 +2694,23 @@
             scale: 2, backgroundColor: '#ffffff', useCORS: true,
             scrollX: 0, scrollY: -window.scrollY,
             onclone: (clonedDoc) => {
-                const sig = clonedDoc.getElementById('g_signature');
-                if (sig) { sig.style.border = 'none'; sig.style.background = 'transparent'; sig.style.boxShadow = 'none'; }
+                // La zone de signature (élément <canvas>) est remplacée par une image figée aux
+                // dimensions exactes affichées à l'écran : plus fiable que de capturer le <canvas>
+                // en place, qui pouvait apparaître décalé selon les navigateurs.
+                const liveSig = document.getElementById('g_signature');
+                const clonedSig = clonedDoc.getElementById('g_signature');
+                if (liveSig && clonedSig) {
+                    const rect = liveSig.getBoundingClientRect();
+                    const img = clonedDoc.createElement('img');
+                    img.src = liveSig.toDataURL('image/png');
+                    img.style.width = rect.width + 'px';
+                    img.style.height = rect.height + 'px';
+                    img.style.display = 'block';
+                    img.style.border = 'none';
+                    img.style.background = 'transparent';
+                    img.style.margin = window.getComputedStyle(liveSig).margin;
+                    clonedSig.replaceWith(img);
+                }
                 clonedDoc.querySelectorAll('#generic-view .no-print').forEach((el) => { el.style.display = 'none'; });
                 clonedDoc.querySelectorAll('#generic-view .y-table input, #generic-view .y-table textarea, #generic-view .y-visa-nom-input').forEach((el) => {
                     if (el.type === 'checkbox') return;
