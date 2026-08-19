@@ -2511,6 +2511,17 @@
             restoreFns.push(() => span.replaceWith(el));
         });
 
+        // Le titre "Nom et qualité du signataire..." peut se retrouver collé en haut de sa zone
+        // pendant la capture (le calcul flex de son conteneur peut varier légèrement) : on fige
+        // ses marges à leur valeur actuelle pour garantir un espacement identique à l'écran.
+        document.querySelectorAll('#yaskawa-view .y-visa-header').forEach((el) => {
+            const computed = window.getComputedStyle(el);
+            const prevMarginTop = el.style.marginTop, prevMarginBottom = el.style.marginBottom;
+            el.style.marginTop = computed.marginTop;
+            el.style.marginBottom = computed.marginBottom;
+            restoreFns.push(() => { el.style.marginTop = prevMarginTop; el.style.marginBottom = prevMarginBottom; });
+        });
+
         // 4) Bandeaux latéraux (texte vertical) : rotation simple d'un bloc horizontal
         document.querySelectorAll('#yaskawa-view .y-sidebar span, #yaskawa-view .y-horaires-label').forEach((el) => {
             const prevStyle = el.getAttribute('style');
@@ -2778,6 +2789,17 @@
             span.style.color = '#000';
             el.replaceWith(span);
             restoreFns.push(() => span.replaceWith(el));
+        });
+
+        // Le titre "Nom et qualité du signataire..." peut se retrouver collé en haut de sa zone
+        // pendant la capture (le calcul flex de son conteneur peut varier légèrement) : on fige
+        // ses marges à leur valeur actuelle pour garantir un espacement identique à l'écran.
+        document.querySelectorAll('#generic-view .y-visa-header').forEach((el) => {
+            const computed = window.getComputedStyle(el);
+            const prevMarginTop = el.style.marginTop, prevMarginBottom = el.style.marginBottom;
+            el.style.marginTop = computed.marginTop;
+            el.style.marginBottom = computed.marginBottom;
+            restoreFns.push(() => { el.style.marginTop = prevMarginTop; el.style.marginBottom = prevMarginBottom; });
         });
 
         document.querySelectorAll('#generic-view .y-sidebar span, #generic-view .y-horaires-label').forEach((el) => {
