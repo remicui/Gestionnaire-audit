@@ -2527,12 +2527,25 @@
                     el.style.display = 'inline-block';
                     el.style.whiteSpace = 'nowrap';
                 });
-                // Les zones de texte compactées pour l'impression peuvent couper un texte un peu long :
-                // on les laisse s'étendre à leur taille naturelle pour ne rien perdre sur le PDF envoyé.
+                // Les zones de texte compactées pour l'impression peuvent couper un texte un peu long
+                // (le <textarea> ne montre pas fiablement tout son contenu sur une image figée) :
+                // on les remplace par un simple bloc de texte qui affiche tout, sans jamais couper.
                 clonedDoc.querySelectorAll('#yaskawa-view textarea').forEach((el) => {
-                    el.style.height = 'auto';
-                    el.style.overflow = 'visible';
-                    el.style.height = el.scrollHeight + 'px';
+                    const computed = window.getComputedStyle(el);
+                    const div = clonedDoc.createElement('div');
+                    div.textContent = el.value;
+                    div.style.width = '100%';
+                    div.style.whiteSpace = 'pre-wrap';
+                    div.style.wordBreak = 'break-word';
+                    div.style.fontSize = computed.fontSize;
+                    div.style.fontFamily = computed.fontFamily;
+                    div.style.lineHeight = computed.lineHeight;
+                    div.style.padding = computed.padding;
+                    div.style.boxSizing = 'border-box';
+                    div.style.border = 'none';
+                    div.style.background = 'transparent';
+                    div.style.minHeight = computed.height;
+                    el.replaceWith(div);
                 });
             }
         });
@@ -2790,12 +2803,25 @@
                     el.style.display = 'inline-block';
                     el.style.whiteSpace = 'nowrap';
                 });
-                // Les zones de texte compactées pour l'impression peuvent couper un texte un peu long :
-                // on les laisse s'étendre à leur taille naturelle pour ne rien perdre sur le PDF envoyé.
+                // Les zones de texte compactées pour l'impression peuvent couper un texte un peu long
+                // (le <textarea> ne montre pas fiablement tout son contenu sur une image figée) :
+                // on les remplace par un simple bloc de texte qui affiche tout, sans jamais couper.
                 clonedDoc.querySelectorAll('#generic-view textarea').forEach((el) => {
-                    el.style.height = 'auto';
-                    el.style.overflow = 'visible';
-                    el.style.height = el.scrollHeight + 'px';
+                    const computed = window.getComputedStyle(el);
+                    const div = clonedDoc.createElement('div');
+                    div.textContent = el.value;
+                    div.style.width = '100%';
+                    div.style.whiteSpace = 'pre-wrap';
+                    div.style.wordBreak = 'break-word';
+                    div.style.fontSize = computed.fontSize;
+                    div.style.fontFamily = computed.fontFamily;
+                    div.style.lineHeight = computed.lineHeight;
+                    div.style.padding = computed.padding;
+                    div.style.boxSizing = 'border-box';
+                    div.style.border = 'none';
+                    div.style.background = 'transparent';
+                    div.style.minHeight = computed.height;
+                    el.replaceWith(div);
                 });
             }
         });
