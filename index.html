@@ -2444,6 +2444,7 @@
         const docEl = document.querySelector('#yaskawa-view .yaskawa-doc');
         const canvas = await html2canvas(docEl, {
             scale: 2, backgroundColor: '#ffffff', useCORS: true,
+            scrollX: 0, scrollY: -window.scrollY,
             onclone: (clonedDoc) => {
                 // Nettoyage propre pour le PDF final : pas de cadre visible autour de la signature,
                 // pas d'icônes natives horloge/calendrier, pas de bordures d'input, et masquage
@@ -2452,12 +2453,40 @@
                 if (sig) { sig.style.border = 'none'; sig.style.background = 'transparent'; sig.style.boxShadow = 'none'; }
                 clonedDoc.querySelectorAll('#yaskawa-view .no-print').forEach((el) => { el.style.display = 'none'; });
                 clonedDoc.querySelectorAll('#yaskawa-view .y-table input, #yaskawa-view .y-table textarea, #yaskawa-view .y-visa-nom-input').forEach((el) => {
+                    if (el.type === 'checkbox') return;
                     el.style.border = 'none';
                     el.style.background = 'transparent';
                 });
-                clonedDoc.querySelectorAll('#yaskawa-view input[type="date"], #yaskawa-view input[type="time"]').forEach((el) => {
-                    el.style.webkitAppearance = 'none';
-                    el.style.appearance = 'none';
+                // Les champs date natifs affichent leur valeur brute (AAAA-MM-JJ) sur l'image générée
+                // au lieu du format JJ/MM/AAAA habituel : on les remplace par du texte simple formaté.
+                clonedDoc.querySelectorAll('#yaskawa-view input[type="date"]').forEach((el) => {
+                    if (el.value) {
+                        const [y, m, d] = el.value.split('-');
+                        el.setAttribute('type', 'text');
+                        el.value = `${d}/${m}/${y}`;
+                    }
+                });
+                // Les champs heure natifs peuvent aussi mal se recopier sur l'image : même traitement.
+                clonedDoc.querySelectorAll('#yaskawa-view input[type="time"]').forEach((el) => {
+                    const v = el.value;
+                    el.setAttribute('type', 'text');
+                    if (v) el.value = v;
+                });
+                // Le texte vertical des bandeaux latéraux (ADMINISTRATION/TECHNICIEN/CLIENT, Horaires)
+                // ne se convertit pas correctement en image avec writing-mode : on bascule sur une
+                // rotation simple d'un bloc de texte horizontal, que la capture gère correctement.
+                clonedDoc.querySelectorAll('#yaskawa-view .y-sidebar span, #yaskawa-view .y-horaires-label').forEach((el) => {
+                    el.style.writingMode = 'horizontal-tb';
+                    el.style.transform = 'rotate(-90deg)';
+                    el.style.display = 'inline-block';
+                    el.style.whiteSpace = 'nowrap';
+                });
+                // Les zones de texte compactées pour l'impression peuvent couper un texte un peu long :
+                // on les laisse s'étendre à leur taille naturelle pour ne rien perdre sur le PDF envoyé.
+                clonedDoc.querySelectorAll('#yaskawa-view textarea').forEach((el) => {
+                    el.style.height = 'auto';
+                    el.style.overflow = 'visible';
+                    el.style.height = el.scrollHeight + 'px';
                 });
             }
         });
@@ -2648,6 +2677,7 @@
         const docEl = document.querySelector('#generic-view .yaskawa-doc');
         const canvas = await html2canvas(docEl, {
             scale: 2, backgroundColor: '#ffffff', useCORS: true,
+            scrollX: 0, scrollY: -window.scrollY,
             onclone: (clonedDoc) => {
                 const sig = clonedDoc.getElementById('g_signature');
                 if (sig) { sig.style.border = 'none'; sig.style.background = 'transparent'; sig.style.boxShadow = 'none'; }
@@ -2657,9 +2687,36 @@
                     el.style.border = 'none';
                     el.style.background = 'transparent';
                 });
-                clonedDoc.querySelectorAll('#generic-view input[type="date"], #generic-view input[type="time"]').forEach((el) => {
-                    el.style.webkitAppearance = 'none';
-                    el.style.appearance = 'none';
+                // Les champs date natifs affichent leur valeur brute (AAAA-MM-JJ) sur l'image générée
+                // au lieu du format JJ/MM/AAAA habituel : on les remplace par du texte simple formaté.
+                clonedDoc.querySelectorAll('#generic-view input[type="date"]').forEach((el) => {
+                    if (el.value) {
+                        const [y, m, d] = el.value.split('-');
+                        el.setAttribute('type', 'text');
+                        el.value = `${d}/${m}/${y}`;
+                    }
+                });
+                // Les champs heure natifs peuvent aussi mal se recopier sur l'image : même traitement.
+                clonedDoc.querySelectorAll('#generic-view input[type="time"]').forEach((el) => {
+                    const v = el.value;
+                    el.setAttribute('type', 'text');
+                    if (v) el.value = v;
+                });
+                // Le texte vertical des bandeaux latéraux (ADMINISTRATION/TECHNICIEN/CLIENT) ne se
+                // convertit pas correctement en image avec writing-mode : on bascule sur une rotation
+                // simple d'un bloc de texte horizontal, que la capture gère correctement.
+                clonedDoc.querySelectorAll('#generic-view .y-sidebar span, #generic-view .y-horaires-label').forEach((el) => {
+                    el.style.writingMode = 'horizontal-tb';
+                    el.style.transform = 'rotate(-90deg)';
+                    el.style.display = 'inline-block';
+                    el.style.whiteSpace = 'nowrap';
+                });
+                // Les zones de texte compactées pour l'impression peuvent couper un texte un peu long :
+                // on les laisse s'étendre à leur taille naturelle pour ne rien perdre sur le PDF envoyé.
+                clonedDoc.querySelectorAll('#generic-view textarea').forEach((el) => {
+                    el.style.height = 'auto';
+                    el.style.overflow = 'visible';
+                    el.style.height = el.scrollHeight + 'px';
                 });
             }
         });
