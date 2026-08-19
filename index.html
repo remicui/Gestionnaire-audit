@@ -2146,7 +2146,11 @@
                     if (ficheId) {
                         uploadPhotoToSupabase(compressedData, ficheId, id).then((cloudUrl) => {
                             prevEl.dataset.cloudUrl = cloudUrl;
-                            saveCurrentReport();
+                            // Sécurité : si l'utilisateur a changé de fiche pendant l'envoi, on n'écrase pas
+                            // la fiche actuellement ouverte avec les données de l'ancienne.
+                            if (document.getElementById('currentReportId').value === ficheId) {
+                                saveCurrentReport();
+                            }
                         }).catch((err) => {
                             console.warn('Upload photo (Supabase) impossible, elle reste locale uniquement :', err.message || err);
                         });
@@ -2167,16 +2171,24 @@
         const id = document.getElementById('currentReportId').value; if(!id) return;
         const photosData = [];
         const photoCloudUrls = [];
-        document.querySelectorAll('.photo-wrapper img').forEach(img => {
-            if (img.src && img.src.startsWith('data:')) {
-                photosData.push(img.src);
-                photoCloudUrls.push(img.dataset.cloudUrl || '');
-            } else if (img.src) {
-                // Fiche reçue d'un autre appareil : seul le lien cloud est disponible (pas de base64 local)
-                photosData.push('');
-                photoCloudUrls.push(img.src);
-            }
-        });
+        try {
+            document.querySelectorAll('.photo-wrapper img').forEach(img => {
+                // Important : on lit l'attribut brut (pas img.src), car un <img> sans photo
+                // (src="") résout img.src vers l'URL de la page elle-même, pas vers une chaîne vide.
+                const rawSrc = img.getAttribute('src');
+                if (!rawSrc) return;
+                if (rawSrc.startsWith('data:')) {
+                    photosData.push(rawSrc);
+                    photoCloudUrls.push(img.dataset.cloudUrl || '');
+                } else if (rawSrc.startsWith('http')) {
+                    // Fiche reçue d'un autre appareil : seul le lien cloud est disponible (pas de base64 local)
+                    photosData.push('');
+                    photoCloudUrls.push(rawSrc);
+                }
+            });
+        } catch (err) {
+            console.warn('Erreur lors de la collecte des photos, la fiche sera sauvegardée sans elles :', err);
+        }
         const data = {
             id: id, type: document.getElementById('displayReportType').innerText, timestamp: Date.now(),
             client: document.getElementById('clientName').value || "Société Inconnue",
