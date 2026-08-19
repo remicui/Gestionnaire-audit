@@ -21,6 +21,17 @@
         }
 
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background-color: #f4f7f9; color: var(--bleu-nuit-soft); line-height: 1.3; }
+        /* Le navigateur applique un fond jaune "auto-remplissage" sur les champs qu'il a remplis
+           automatiquement (nom, tél, email...), qui résiste au CSS classique (background-color).
+           Seule cette astuce (une ombre interne géante) permet de le masquer efficacement. */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        textarea:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+            box-shadow: 0 0 0 1000px #fff inset !important;
+            -webkit-text-fill-color: #000 !important;
+        }
         
         #app-shell { max-width: 1300px; margin: 0 auto; padding: 10px; display: block; }
         .home-columns { display: flex; gap: 24px; align-items: flex-start; }
@@ -2480,20 +2491,24 @@
             restoreFns.push(() => div.replaceWith(el));
         });
 
-        // 3) Champs date/heure natifs : basculer en texte simple, bien formaté
-        document.querySelectorAll('#yaskawa-view input[type="date"]').forEach((el) => {
-            if (el.value) {
-                const original = el.value;
+        // 3) Tous les champs à une seule ligne (dates, heures, texte, email...) : même souci que les
+        // zones de texte, un <input> natif peut apparaître mal aligné/coupé lors de la capture.
+        // On les remplace par un simple texte, en formatant les dates au passage (JJ/MM/AAAA).
+        document.querySelectorAll('#yaskawa-view .y-table input:not([type="checkbox"]), #yaskawa-view .y-visa-nom-input').forEach((el) => {
+            let displayValue = el.value || '';
+            if (el.type === 'date' && el.value) {
                 const [y, m, d] = el.value.split('-');
-                el.setAttribute('type', 'text');
-                el.value = `${d}/${m}/${y}`;
-                restoreFns.push(() => { el.setAttribute('type', 'date'); el.value = original; });
+                displayValue = `${d}/${m}/${y}`;
             }
-        });
-        document.querySelectorAll('#yaskawa-view input[type="time"]').forEach((el) => {
-            const original = el.value;
-            el.setAttribute('type', 'text');
-            restoreFns.push(() => { el.setAttribute('type', 'time'); el.value = original; });
+            const computed = window.getComputedStyle(el);
+            const span = document.createElement('span');
+            span.textContent = displayValue;
+            span.style.fontSize = computed.fontSize;
+            span.style.fontFamily = computed.fontFamily;
+            span.style.lineHeight = computed.lineHeight;
+            span.style.color = '#000';
+            el.replaceWith(span);
+            restoreFns.push(() => span.replaceWith(el));
         });
 
         // 4) Bandeaux latéraux (texte vertical) : rotation simple d'un bloc horizontal
@@ -2511,15 +2526,6 @@
             const prevDisplay = el.style.display;
             el.style.display = 'none';
             restoreFns.push(() => { el.style.display = prevDisplay; });
-        });
-
-        // 6) Bordures/fonds des champs texte : masqués pour un rendu propre
-        document.querySelectorAll('#yaskawa-view .y-table input, #yaskawa-view .y-visa-nom-input').forEach((el) => {
-            if (el.type === 'checkbox') return;
-            const prevBorder = el.style.border, prevBg = el.style.background;
-            el.style.border = 'none';
-            el.style.background = 'transparent';
-            restoreFns.push(() => { el.style.border = prevBorder; el.style.background = prevBg; });
         });
 
         // On laisse le navigateur recalculer complètement la mise en page avant la capture,
@@ -2754,19 +2760,24 @@
             restoreFns.push(() => div.replaceWith(el));
         });
 
-        document.querySelectorAll('#generic-view input[type="date"]').forEach((el) => {
-            if (el.value) {
-                const original = el.value;
+        // Tous les champs à une seule ligne (dates, heures, texte, email...) : même souci que les
+        // zones de texte, un <input> natif peut apparaître mal aligné/coupé lors de la capture.
+        // On les remplace par un simple texte, en formatant les dates au passage (JJ/MM/AAAA).
+        document.querySelectorAll('#generic-view .y-table input:not([type="checkbox"]), #generic-view .y-visa-nom-input').forEach((el) => {
+            let displayValue = el.value || '';
+            if (el.type === 'date' && el.value) {
                 const [y, m, d] = el.value.split('-');
-                el.setAttribute('type', 'text');
-                el.value = `${d}/${m}/${y}`;
-                restoreFns.push(() => { el.setAttribute('type', 'date'); el.value = original; });
+                displayValue = `${d}/${m}/${y}`;
             }
-        });
-        document.querySelectorAll('#generic-view input[type="time"]').forEach((el) => {
-            const original = el.value;
-            el.setAttribute('type', 'text');
-            restoreFns.push(() => { el.setAttribute('type', 'time'); el.value = original; });
+            const computed = window.getComputedStyle(el);
+            const span = document.createElement('span');
+            span.textContent = displayValue;
+            span.style.fontSize = computed.fontSize;
+            span.style.fontFamily = computed.fontFamily;
+            span.style.lineHeight = computed.lineHeight;
+            span.style.color = '#000';
+            el.replaceWith(span);
+            restoreFns.push(() => span.replaceWith(el));
         });
 
         document.querySelectorAll('#generic-view .y-sidebar span, #generic-view .y-horaires-label').forEach((el) => {
@@ -2782,14 +2793,6 @@
             const prevDisplay = el.style.display;
             el.style.display = 'none';
             restoreFns.push(() => { el.style.display = prevDisplay; });
-        });
-
-        document.querySelectorAll('#generic-view .y-table input, #generic-view .y-visa-nom-input').forEach((el) => {
-            if (el.type === 'checkbox') return;
-            const prevBorder = el.style.border, prevBg = el.style.background;
-            el.style.border = 'none';
-            el.style.background = 'transparent';
-            restoreFns.push(() => { el.style.border = prevBorder; el.style.background = prevBg; });
         });
 
         await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
