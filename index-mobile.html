@@ -2473,82 +2473,89 @@
 
     async function generateYaskawaPdfBlob() {
         const docEl = document.querySelector('#yaskawa-view .yaskawa-doc');
-        const canvas = await html2canvas(docEl, {
-            scale: 1.5, backgroundColor: '#ffffff', useCORS: true,
-            scrollX: 0, scrollY: -window.scrollY,
-            onclone: (clonedDoc) => {
-                // Nettoyage propre pour le PDF final : pas de cadre visible autour de la signature,
-                // pas d'icônes natives horloge/calendrier, pas de bordures d'input, et masquage
-                // des éléments d'interface (bouton "Effacer") qui n'ont rien à faire sur le document.
-                // La zone de signature (élément <canvas>) est remplacée par une image figée aux
-                // dimensions exactes affichées à l'écran : plus fiable que de capturer le <canvas>
-                // en place, qui pouvait apparaître décalé selon les navigateurs.
-                const liveSig = document.getElementById('y_signature');
-                const clonedSig = clonedDoc.getElementById('y_signature');
-                if (liveSig && clonedSig) {
-                    const rect = liveSig.getBoundingClientRect();
-                    const img = clonedDoc.createElement('img');
-                    img.src = liveSig.toDataURL('image/png');
-                    img.style.width = rect.width + 'px';
-                    img.style.height = rect.height + 'px';
-                    img.style.display = 'block';
-                    img.style.border = 'none';
-                    img.style.background = 'transparent';
-                    img.style.margin = window.getComputedStyle(liveSig).margin;
-                    clonedSig.replaceWith(img);
-                }
-                clonedDoc.querySelectorAll('#yaskawa-view .no-print').forEach((el) => { el.style.display = 'none'; });
-                clonedDoc.querySelectorAll('#yaskawa-view .y-table input, #yaskawa-view .y-table textarea, #yaskawa-view .y-visa-nom-input').forEach((el) => {
-                    if (el.type === 'checkbox') return;
-                    el.style.border = 'none';
-                    el.style.background = 'transparent';
-                });
-                // Les champs date natifs affichent leur valeur brute (AAAA-MM-JJ) sur l'image générée
-                // au lieu du format JJ/MM/AAAA habituel : on les remplace par du texte simple formaté.
-                clonedDoc.querySelectorAll('#yaskawa-view input[type="date"]').forEach((el) => {
-                    if (el.value) {
-                        const [y, m, d] = el.value.split('-');
-                        el.setAttribute('type', 'text');
-                        el.value = `${d}/${m}/${y}`;
-                    }
-                });
-                // Les champs heure natifs peuvent aussi mal se recopier sur l'image : même traitement.
-                clonedDoc.querySelectorAll('#yaskawa-view input[type="time"]').forEach((el) => {
-                    const v = el.value;
-                    el.setAttribute('type', 'text');
-                    if (v) el.value = v;
-                });
-                // Le texte vertical des bandeaux latéraux (ADMINISTRATION/TECHNICIEN/CLIENT, Horaires)
-                // ne se convertit pas correctement en image avec writing-mode : on bascule sur une
-                // rotation simple d'un bloc de texte horizontal, que la capture gère correctement.
-                clonedDoc.querySelectorAll('#yaskawa-view .y-sidebar span, #yaskawa-view .y-horaires-label').forEach((el) => {
-                    el.style.writingMode = 'horizontal-tb';
-                    el.style.transform = 'rotate(-90deg)';
-                    el.style.display = 'inline-block';
-                    el.style.whiteSpace = 'nowrap';
-                });
-                // Les zones de texte compactées pour l'impression peuvent couper un texte un peu long
-                // (le <textarea> ne montre pas fiablement tout son contenu sur une image figée) :
-                // on les remplace par un simple bloc de texte qui affiche tout, sans jamais couper.
-                clonedDoc.querySelectorAll('#yaskawa-view textarea').forEach((el) => {
-                    const computed = window.getComputedStyle(el);
-                    const div = clonedDoc.createElement('div');
-                    div.textContent = el.value;
-                    div.style.width = '100%';
-                    div.style.whiteSpace = 'pre-wrap';
-                    div.style.wordBreak = 'break-word';
-                    div.style.fontSize = computed.fontSize;
-                    div.style.fontFamily = computed.fontFamily;
-                    div.style.lineHeight = computed.lineHeight;
-                    div.style.padding = computed.padding;
-                    div.style.boxSizing = 'border-box';
-                    div.style.border = 'none';
-                    div.style.background = 'transparent';
-                    div.style.minHeight = computed.height;
-                    el.replaceWith(div);
-                });
+        const restoreFns = [];
+
+        const sigCanvas = document.getElementById('y_signature');
+        if (sigCanvas) {
+            const rect = sigCanvas.getBoundingClientRect();
+            const img = document.createElement('img');
+            img.src = sigCanvas.toDataURL('image/png');
+            img.style.width = rect.width + 'px';
+            img.style.height = rect.height + 'px';
+            img.style.display = 'block';
+            img.style.border = 'none';
+            img.style.background = 'transparent';
+            img.style.margin = window.getComputedStyle(sigCanvas).margin;
+            sigCanvas.replaceWith(img);
+            restoreFns.push(() => img.replaceWith(sigCanvas));
+        }
+
+        document.querySelectorAll('#yaskawa-view textarea').forEach((el) => {
+            const computed = window.getComputedStyle(el);
+            const div = document.createElement('div');
+            div.textContent = el.value;
+            div.style.width = '100%';
+            div.style.whiteSpace = 'pre-wrap';
+            div.style.wordBreak = 'break-word';
+            div.style.fontSize = computed.fontSize;
+            div.style.fontFamily = computed.fontFamily;
+            div.style.lineHeight = computed.lineHeight;
+            div.style.padding = computed.padding;
+            div.style.boxSizing = 'border-box';
+            div.style.border = 'none';
+            div.style.background = 'transparent';
+            div.style.minHeight = computed.height;
+            el.replaceWith(div);
+            restoreFns.push(() => div.replaceWith(el));
+        });
+
+        document.querySelectorAll('#yaskawa-view input[type="date"]').forEach((el) => {
+            if (el.value) {
+                const original = el.value;
+                const [y, m, d] = el.value.split('-');
+                el.setAttribute('type', 'text');
+                el.value = `${d}/${m}/${y}`;
+                restoreFns.push(() => { el.setAttribute('type', 'date'); el.value = original; });
             }
         });
+        document.querySelectorAll('#yaskawa-view input[type="time"]').forEach((el) => {
+            const original = el.value;
+            el.setAttribute('type', 'text');
+            restoreFns.push(() => { el.setAttribute('type', 'time'); el.value = original; });
+        });
+
+        document.querySelectorAll('#yaskawa-view .y-sidebar span, #yaskawa-view .y-horaires-label').forEach((el) => {
+            const prevStyle = el.getAttribute('style');
+            el.style.writingMode = 'horizontal-tb';
+            el.style.transform = 'rotate(-90deg)';
+            el.style.display = 'inline-block';
+            el.style.whiteSpace = 'nowrap';
+            restoreFns.push(() => el.setAttribute('style', prevStyle || ''));
+        });
+
+        document.querySelectorAll('#yaskawa-view .no-print').forEach((el) => {
+            const prevDisplay = el.style.display;
+            el.style.display = 'none';
+            restoreFns.push(() => { el.style.display = prevDisplay; });
+        });
+
+        document.querySelectorAll('#yaskawa-view .y-table input, #yaskawa-view .y-visa-nom-input').forEach((el) => {
+            if (el.type === 'checkbox') return;
+            const prevBorder = el.style.border, prevBg = el.style.background;
+            el.style.border = 'none';
+            el.style.background = 'transparent';
+            restoreFns.push(() => { el.style.border = prevBorder; el.style.background = prevBg; });
+        });
+
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+        let canvas;
+        try {
+            canvas = await html2canvas(docEl, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
+        } finally {
+            restoreFns.reverse().forEach((fn) => { try { fn(); } catch (e) { /* ignore */ } });
+        }
+
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageW = pdf.internal.pageSize.getWidth();
@@ -2752,79 +2759,89 @@
 
     async function generateGenericPdfBlob() {
         const docEl = document.querySelector('#generic-view .yaskawa-doc');
-        const canvas = await html2canvas(docEl, {
-            scale: 1.5, backgroundColor: '#ffffff', useCORS: true,
-            scrollX: 0, scrollY: -window.scrollY,
-            onclone: (clonedDoc) => {
-                // La zone de signature (élément <canvas>) est remplacée par une image figée aux
-                // dimensions exactes affichées à l'écran : plus fiable que de capturer le <canvas>
-                // en place, qui pouvait apparaître décalé selon les navigateurs.
-                const liveSig = document.getElementById('g_signature');
-                const clonedSig = clonedDoc.getElementById('g_signature');
-                if (liveSig && clonedSig) {
-                    const rect = liveSig.getBoundingClientRect();
-                    const img = clonedDoc.createElement('img');
-                    img.src = liveSig.toDataURL('image/png');
-                    img.style.width = rect.width + 'px';
-                    img.style.height = rect.height + 'px';
-                    img.style.display = 'block';
-                    img.style.border = 'none';
-                    img.style.background = 'transparent';
-                    img.style.margin = window.getComputedStyle(liveSig).margin;
-                    clonedSig.replaceWith(img);
-                }
-                clonedDoc.querySelectorAll('#generic-view .no-print').forEach((el) => { el.style.display = 'none'; });
-                clonedDoc.querySelectorAll('#generic-view .y-table input, #generic-view .y-table textarea, #generic-view .y-visa-nom-input').forEach((el) => {
-                    if (el.type === 'checkbox') return;
-                    el.style.border = 'none';
-                    el.style.background = 'transparent';
-                });
-                // Les champs date natifs affichent leur valeur brute (AAAA-MM-JJ) sur l'image générée
-                // au lieu du format JJ/MM/AAAA habituel : on les remplace par du texte simple formaté.
-                clonedDoc.querySelectorAll('#generic-view input[type="date"]').forEach((el) => {
-                    if (el.value) {
-                        const [y, m, d] = el.value.split('-');
-                        el.setAttribute('type', 'text');
-                        el.value = `${d}/${m}/${y}`;
-                    }
-                });
-                // Les champs heure natifs peuvent aussi mal se recopier sur l'image : même traitement.
-                clonedDoc.querySelectorAll('#generic-view input[type="time"]').forEach((el) => {
-                    const v = el.value;
-                    el.setAttribute('type', 'text');
-                    if (v) el.value = v;
-                });
-                // Le texte vertical des bandeaux latéraux (ADMINISTRATION/TECHNICIEN/CLIENT) ne se
-                // convertit pas correctement en image avec writing-mode : on bascule sur une rotation
-                // simple d'un bloc de texte horizontal, que la capture gère correctement.
-                clonedDoc.querySelectorAll('#generic-view .y-sidebar span, #generic-view .y-horaires-label').forEach((el) => {
-                    el.style.writingMode = 'horizontal-tb';
-                    el.style.transform = 'rotate(-90deg)';
-                    el.style.display = 'inline-block';
-                    el.style.whiteSpace = 'nowrap';
-                });
-                // Les zones de texte compactées pour l'impression peuvent couper un texte un peu long
-                // (le <textarea> ne montre pas fiablement tout son contenu sur une image figée) :
-                // on les remplace par un simple bloc de texte qui affiche tout, sans jamais couper.
-                clonedDoc.querySelectorAll('#generic-view textarea').forEach((el) => {
-                    const computed = window.getComputedStyle(el);
-                    const div = clonedDoc.createElement('div');
-                    div.textContent = el.value;
-                    div.style.width = '100%';
-                    div.style.whiteSpace = 'pre-wrap';
-                    div.style.wordBreak = 'break-word';
-                    div.style.fontSize = computed.fontSize;
-                    div.style.fontFamily = computed.fontFamily;
-                    div.style.lineHeight = computed.lineHeight;
-                    div.style.padding = computed.padding;
-                    div.style.boxSizing = 'border-box';
-                    div.style.border = 'none';
-                    div.style.background = 'transparent';
-                    div.style.minHeight = computed.height;
-                    el.replaceWith(div);
-                });
+        const restoreFns = [];
+
+        const sigCanvas = document.getElementById('g_signature');
+        if (sigCanvas) {
+            const rect = sigCanvas.getBoundingClientRect();
+            const img = document.createElement('img');
+            img.src = sigCanvas.toDataURL('image/png');
+            img.style.width = rect.width + 'px';
+            img.style.height = rect.height + 'px';
+            img.style.display = 'block';
+            img.style.border = 'none';
+            img.style.background = 'transparent';
+            img.style.margin = window.getComputedStyle(sigCanvas).margin;
+            sigCanvas.replaceWith(img);
+            restoreFns.push(() => img.replaceWith(sigCanvas));
+        }
+
+        document.querySelectorAll('#generic-view textarea').forEach((el) => {
+            const computed = window.getComputedStyle(el);
+            const div = document.createElement('div');
+            div.textContent = el.value;
+            div.style.width = '100%';
+            div.style.whiteSpace = 'pre-wrap';
+            div.style.wordBreak = 'break-word';
+            div.style.fontSize = computed.fontSize;
+            div.style.fontFamily = computed.fontFamily;
+            div.style.lineHeight = computed.lineHeight;
+            div.style.padding = computed.padding;
+            div.style.boxSizing = 'border-box';
+            div.style.border = 'none';
+            div.style.background = 'transparent';
+            div.style.minHeight = computed.height;
+            el.replaceWith(div);
+            restoreFns.push(() => div.replaceWith(el));
+        });
+
+        document.querySelectorAll('#generic-view input[type="date"]').forEach((el) => {
+            if (el.value) {
+                const original = el.value;
+                const [y, m, d] = el.value.split('-');
+                el.setAttribute('type', 'text');
+                el.value = `${d}/${m}/${y}`;
+                restoreFns.push(() => { el.setAttribute('type', 'date'); el.value = original; });
             }
         });
+        document.querySelectorAll('#generic-view input[type="time"]').forEach((el) => {
+            const original = el.value;
+            el.setAttribute('type', 'text');
+            restoreFns.push(() => { el.setAttribute('type', 'time'); el.value = original; });
+        });
+
+        document.querySelectorAll('#generic-view .y-sidebar span, #generic-view .y-horaires-label').forEach((el) => {
+            const prevStyle = el.getAttribute('style');
+            el.style.writingMode = 'horizontal-tb';
+            el.style.transform = 'rotate(-90deg)';
+            el.style.display = 'inline-block';
+            el.style.whiteSpace = 'nowrap';
+            restoreFns.push(() => el.setAttribute('style', prevStyle || ''));
+        });
+
+        document.querySelectorAll('#generic-view .no-print').forEach((el) => {
+            const prevDisplay = el.style.display;
+            el.style.display = 'none';
+            restoreFns.push(() => { el.style.display = prevDisplay; });
+        });
+
+        document.querySelectorAll('#generic-view .y-table input, #generic-view .y-visa-nom-input').forEach((el) => {
+            if (el.type === 'checkbox') return;
+            const prevBorder = el.style.border, prevBg = el.style.background;
+            el.style.border = 'none';
+            el.style.background = 'transparent';
+            restoreFns.push(() => { el.style.border = prevBorder; el.style.background = prevBg; });
+        });
+
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+        let canvas;
+        try {
+            canvas = await html2canvas(docEl, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
+        } finally {
+            restoreFns.reverse().forEach((fn) => { try { fn(); } catch (e) { /* ignore */ } });
+        }
+
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageW = pdf.internal.pageSize.getWidth();
