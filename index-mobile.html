@@ -978,6 +978,38 @@
     let fbListenerAttached = false;
     const cloudSaveTimers = {};
 
+    // ---------- STOCKAGE PHOTOS (Supabase Storage, gratuit) ----------
+    const SUPABASE_URL = 'https://nabzumvspxcbsukowuas.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hYnp1bXZzcHhjYnN1a293dWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzE1OTAsImV4cCI6MjA5NTAwNzU5MH0.xh5louA7V-bIMzV6pPp-1fzdjblx7rK4S7klAkzorbc';
+    const SUPABASE_BUCKET = 'photos-audit';
+
+    function dataUrlToBlob(dataUrl) {
+        const [header, base64] = dataUrl.split(',');
+        const mimeMatch = header.match(/data:([^;]+);/);
+        const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+        const bin = atob(base64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return new Blob([bytes], { type: mime });
+    }
+
+    async function uploadPhotoToSupabase(dataUrl, ficheId, localId) {
+        const blob = dataUrlToBlob(dataUrl);
+        const path = `${ficheId}/photo_${localId}_${Date.now()}.jpg`;
+        const url = `${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${path}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                'apikey': SUPABASE_ANON_KEY,
+                'Content-Type': blob.type
+            },
+            body: blob
+        });
+        if (!res.ok) throw new Error('Échec upload Supabase : ' + res.status);
+        return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${path}`;
+    }
+
     function initFirebaseSync() {
         try {
             firebase.initializeApp(firebaseConfig);
@@ -1115,9 +1147,8 @@
     }
 
     // Écriture cloud différée (debounce) : évite d'envoyer une requête à chaque frappe clavier.
-    // Les photos ne sont PAS envoyées dans le cloud (nécessiterait Firebase Storage, payant) :
-    // elles restent disponibles uniquement sur l'appareil où elles ont été prises/ajoutées.
-    // Le reste de la fiche (client, machine, dates, tableaux...) se synchronise normalement.
+    // Les photos sont hébergées à part (Supabase Storage, gratuit) : on n'envoie jamais le contenu
+    // base64 (trop lourd pour Firestore), seulement les liens légers une fois l'upload terminé.
     const deletedIds = new Set();
 
     function cloudSave(id, data) {
@@ -1128,10 +1159,12 @@
             // on annule l'écriture pour ne pas la faire "revivre" dans le cloud.
             if (deletedIds.has(id)) return;
             const cloudData = Object.assign({}, data);
-            if (Array.isArray(cloudData.photos) && cloudData.photos.length > 0) {
+            if (Array.isArray(cloudData.photoCloudUrls) && cloudData.photoCloudUrls.length > 0) {
+                cloudData.photos = cloudData.photoCloudUrls.filter((u) => u);
+            } else {
                 cloudData.photos = [];
-                cloudData.photosNote = 'Photos disponibles uniquement sur l\'appareil où la fiche a été créée.';
             }
+            delete cloudData.photoCloudUrls;
             const json = JSON.stringify(cloudData);
             if (json.length > 900000) {
                 console.warn('Fiche trop volumineuse pour la synchronisation cloud :', id);
@@ -2109,14 +2142,14 @@
     function toggleIoFields(cb) { document.getElementById('io_nb_container').classList.toggle('io-hidden', !cb.checked); }
     function toggleLogFields(cb, targetId) { document.getElementById(targetId).classList.toggle('log-hidden', !cb.checked); }
 
-    function addNewPhoto(src = null) {
+    function addNewPhoto(src = null, cloudUrl = '') {
         photoCounter++;
         const grid = document.getElementById('photoGrid');
         const div = document.createElement('div');
         div.className = 'photo-wrapper';
         div.innerHTML = `<div class="photo-item" id="p_item_${photoCounter}" onclick="document.getElementById('img_${photoCounter}').click()">
             <span id="txt_${photoCounter}" style="${src ? 'display:none' : ''}">📸 Cliquez pour ajouter</span>
-            <img id="prev_${photoCounter}" src="${src || ''}" style="${src ? 'display:block' : 'display:none'}">
+            <img id="prev_${photoCounter}" src="${src || ''}" data-cloud-url="${cloudUrl || ''}" style="${src ? 'display:block' : 'display:none'}">
             <input type="file" id="img_${photoCounter}" accept="image/*" style="display:none" onchange="previewImg(this, ${photoCounter})">
         </div><button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveCurrentReport();" style="position:absolute; top:10px; right:10px;">❌</button>`;
         grid.appendChild(div);
@@ -2137,10 +2170,24 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     const compressedData = canvas.toDataURL('image/jpeg', 0.7);
-                    document.getElementById('prev_'+id).src = compressedData;
-                    document.getElementById('prev_'+id).style.display = 'block';
+                    const prevEl = document.getElementById('prev_'+id);
+                    prevEl.src = compressedData;
+                    prevEl.dataset.cloudUrl = '';
+                    prevEl.style.display = 'block';
                     document.getElementById('txt_'+id).style.display = 'none';
                     saveCurrentReport();
+
+                    // Upload en arrière-plan vers la banque d'images (Supabase), pour que la photo
+                    // se synchronise ensuite sur les autres appareils via la fiche cloud.
+                    const ficheId = document.getElementById('currentReportId').value;
+                    if (ficheId) {
+                        uploadPhotoToSupabase(compressedData, ficheId, id).then((cloudUrl) => {
+                            prevEl.dataset.cloudUrl = cloudUrl;
+                            saveCurrentReport();
+                        }).catch((err) => {
+                            console.warn('Upload photo (Supabase) impossible, elle reste locale uniquement :', err.message || err);
+                        });
+                    }
                 };
             };
             reader.readAsDataURL(input.files[0]);
@@ -2155,8 +2202,18 @@
 
     function saveCurrentReport() {
         const id = document.getElementById('currentReportId').value; if(!id) return;
-        const photosData = []; 
-        document.querySelectorAll('.photo-wrapper img').forEach(img => { if(img.src && img.src.startsWith('data:')) photosData.push(img.src); });
+        const photosData = [];
+        const photoCloudUrls = [];
+        document.querySelectorAll('.photo-wrapper img').forEach(img => {
+            if (img.src && img.src.startsWith('data:')) {
+                photosData.push(img.src);
+                photoCloudUrls.push(img.dataset.cloudUrl || '');
+            } else if (img.src) {
+                // Fiche reçue d'un autre appareil : seul le lien cloud est disponible (pas de base64 local)
+                photosData.push('');
+                photoCloudUrls.push(img.src);
+            }
+        });
         const data = {
             id: id, type: document.getElementById('displayReportType').innerText, timestamp: Date.now(),
             client: document.getElementById('clientName').value || "Société Inconnue",
@@ -2165,7 +2222,8 @@
             inputs: Array.from(document.querySelectorAll('input:not([type="file"]), select, textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
             axeCount: document.querySelectorAll('.axe-container').length,
             ioCount: document.querySelector('#ioTable tbody').rows.length,
-            photos: photosData
+            photos: photosData,
+            photoCloudUrls: photoCloudUrls
         };
         localStorage.setItem(id, JSON.stringify(data));
         cloudSave(id, data);
@@ -2179,7 +2237,12 @@
         document.getElementById('axes-list').innerHTML = ''; for(let i=0; i<data.axeCount; i++) addAxe();
         document.querySelector('#ioTable tbody').innerHTML = ''; for(let i=0; i<data.ioCount; i++) addIORow();
         document.getElementById('photoGrid').innerHTML = '';
-        if(data.photos) data.photos.forEach(pSrc => addNewPhoto(pSrc));
+        if (data.photos) {
+            data.photos.forEach((pSrc, idx) => {
+                const cloudUrl = (pSrc && pSrc.startsWith('http')) ? pSrc : ((data.photoCloudUrls && data.photoCloudUrls[idx]) || '');
+                addNewPhoto(pSrc, cloudUrl);
+            });
+        }
         data.inputs.forEach(item => { const el = document.getElementById(item.id); if(el) { if(el.type === 'checkbox' || el.type === 'radio') el.checked = item.val; else el.value = item.val; } });
         showView('form-view');
     }
