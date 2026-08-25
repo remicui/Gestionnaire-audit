@@ -215,110 +215,23 @@
             #yaskawa-view .y-footer, #generic-view .y-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
             #generic-view .y-pieces-table tr { page-break-inside: avoid !important; break-inside: avoid !important; }
 
-            /* Étirer le document YASKAWA pour occuper toute la hauteur de la page A4 (fiche courte, tient sur 1 page) */
-            #yaskawa-view .yaskawa-a4-wrapper {
-                height: 277mm !important;
-                display: flex !important;
-                flex-direction: column !important;
-                overflow: hidden !important;
+            /* La mise à l'échelle pour tenir sur une seule page A4 est gérée en JavaScript
+               (zoom appliqué juste avant l'impression, cf. fitDocToOnePage) : plus fiable qu'un
+               étirement flexible, qui pouvait comprimer/décaler certaines zones (signature...). */
+            #yaskawa-view .yaskawa-a4-wrapper, #generic-view .yaskawa-a4-wrapper {
+                height: auto !important;
+                overflow: visible !important;
             }
-            #yaskawa-view #yaskawaForm {
-                display: flex !important;
-                flex-direction: column !important;
-                flex: 1 1 auto !important;
-                min-height: 0 !important;
+            #yaskawa-view .yaskawa-doc, #generic-view .yaskawa-doc {
+                overflow: visible !important;
             }
-            #yaskawa-view .yaskawa-doc {
-                display: flex !important;
-                flex-direction: column !important;
-                flex: 1 1 auto !important;
-                min-height: 0 !important;
-                overflow: hidden !important;
+            #yaskawa-view .y-visa-cell, #generic-view .y-visa-cell {
+                overflow: visible !important;
             }
-            #yaskawa-view .y-block-last {
-                flex: 1 1 auto !important;
-                display: flex !important;
-                min-height: 0 !important;
-            }
-            #yaskawa-view .y-block-last .y-content {
-                flex: 1 1 auto !important;
-                display: flex !important;
-                flex-direction: column !important;
-                min-height: 0 !important;
-            }
-            #yaskawa-view .y-visa-row {
-                flex: 1 1 auto !important;
-                min-height: 0 !important;
-            }
-            #yaskawa-view .y-visa-cell {
-                min-height: 0 !important;
-                overflow: hidden !important;
-            }
-            #yaskawa-view .y-visa-header,
-            #yaskawa-view .y-visa-nom-input,
-            #yaskawa-view #y_signature {
-                flex-shrink: 0 !important;
-            }
-            #yaskawa-view .y-fill-spacer {
-                flex: 1 1 auto !important;
-                flex-shrink: 1 !important;
-            }
-            #yaskawa-view .y-footer {
-                flex: 0 0 auto !important;
-            }
-
-            /* Fiche générique : étirement pour remplir exactement une page A4. La zone de signature
-               (titre, nom, zone de dessin) ne doit JAMAIS être compressée même si le reste du
-               contenu est un peu juste : seul l'espace vide en fin de page absorbe la différence. */
-            #generic-view .yaskawa-a4-wrapper {
-                height: 277mm !important;
-                display: flex !important;
-                flex-direction: column !important;
-                overflow: hidden !important;
-            }
-            #generic-view #genericForm {
-                display: flex !important;
-                flex-direction: column !important;
-                flex: 1 1 auto !important;
-                min-height: 0 !important;
-            }
-            #generic-view .yaskawa-doc {
-                display: flex !important;
-                flex-direction: column !important;
-                flex: 1 1 auto !important;
-                min-height: 0 !important;
-                overflow: hidden !important;
-            }
-            #generic-view .y-block-last {
-                flex: 1 1 auto !important;
-                display: flex !important;
-                min-height: 0 !important;
-            }
-            #generic-view .y-block-last .y-content {
-                flex: 1 1 auto !important;
-                display: flex !important;
-                flex-direction: column !important;
-                min-height: 0 !important;
-            }
-            #generic-view .y-visa-row {
-                flex: 1 1 auto !important;
-                min-height: 0 !important;
-            }
-            #generic-view .y-visa-cell {
-                min-height: 0 !important;
-                overflow: hidden !important;
-            }
-            #generic-view .y-visa-header,
-            #generic-view .y-visa-nom-input,
-            #generic-view #g_signature {
-                flex-shrink: 0 !important;
-            }
-            #generic-view .y-fill-spacer {
-                flex: 1 1 auto !important;
-                flex-shrink: 1 !important;
+            #yaskawa-view .y-fill-spacer, #generic-view .y-fill-spacer {
+                display: none !important;
             }
             #generic-view .y-footer {
-                flex: 0 0 auto !important;
                 border: none !important;
             }
 
@@ -1569,6 +1482,33 @@
     }
 
     function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id === 'home') updateHistoryList(); }
+
+    // ---------- MISE À L'ÉCHELLE POUR TENIR SUR UNE PAGE A4 (impression via window.print()) ----------
+    // Plutôt que de comprimer le contenu avec du flexbox (source de décalages, notamment sur la
+    // signature), on mesure la hauteur réelle nécessaire juste avant l'impression et on réduit
+    // (ou agrandit légèrement) l'ensemble du document à l'échelle : tout reste parfaitement
+    // proportionné, rien ne peut se décaler ou être coupé différemment d'une zone à l'autre.
+    function fitDocToOnePage(viewId) {
+        const view = document.getElementById(viewId);
+        if (!view) return;
+        const doc = view.querySelector('.yaskawa-doc');
+        if (!doc) return;
+        doc.style.zoom = 1;
+        const naturalHeightPx = doc.scrollHeight;
+        const targetHeightPx = 277 * (96 / 25.4); // 277mm convertis en pixels (96dpi)
+        let zoomLevel = targetHeightPx / naturalHeightPx;
+        zoomLevel = Math.min(zoomLevel, 1.12); // évite d'agrandir excessivement une fiche courte
+        doc.style.zoom = zoomLevel;
+    }
+
+    window.addEventListener('beforeprint', () => {
+        fitDocToOnePage('yaskawa-view');
+        fitDocToOnePage('generic-view');
+    });
+    window.addEventListener('afterprint', () => {
+        document.querySelectorAll('.yaskawa-doc').forEach((d) => { d.style.zoom = ''; });
+    });
+
 
     // ---------- STATUT DE FICHE (calculé automatiquement) ----------
     function computeFicheStatus(canvas, clientValue, mainFieldValue) {
