@@ -215,9 +215,10 @@
             #yaskawa-view .y-footer, #generic-view .y-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
             #generic-view .y-pieces-table tr { page-break-inside: avoid !important; break-inside: avoid !important; }
 
-            /* La mise à l'échelle pour tenir sur une seule page A4 est gérée en JavaScript
-               (zoom appliqué juste avant l'impression, cf. fitDocToOnePage) : plus fiable qu'un
-               étirement flexible, qui pouvait comprimer/décaler certaines zones (signature...). */
+            /* Mise en page naturelle à l'impression : le contenu s'affiche à sa taille normale
+               (compactée ci-dessous), sans forcer un étirement ni une mise à l'échelle qui
+               s'est révélée peu fiable (décalages). Si le contenu est très long, il se
+               poursuit proprement sur une 2e page plutôt que de risquer un rendu cassé. */
             #yaskawa-view .yaskawa-a4-wrapper, #generic-view .yaskawa-a4-wrapper {
                 height: auto !important;
                 overflow: visible !important;
@@ -1482,32 +1483,6 @@
     }
 
     function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id === 'home') updateHistoryList(); }
-
-    // ---------- MISE À L'ÉCHELLE POUR TENIR SUR UNE PAGE A4 (impression via window.print()) ----------
-    // Plutôt que de comprimer le contenu avec du flexbox (source de décalages, notamment sur la
-    // signature), on mesure la hauteur réelle nécessaire juste avant l'impression et on réduit
-    // (ou agrandit légèrement) l'ensemble du document à l'échelle : tout reste parfaitement
-    // proportionné, rien ne peut se décaler ou être coupé différemment d'une zone à l'autre.
-    function fitDocToOnePage(viewId) {
-        const view = document.getElementById(viewId);
-        if (!view) return;
-        const doc = view.querySelector('.yaskawa-doc');
-        if (!doc) return;
-        doc.style.zoom = 1;
-        const naturalHeightPx = doc.scrollHeight;
-        const targetHeightPx = 277 * (96 / 25.4); // 277mm convertis en pixels (96dpi)
-        let zoomLevel = targetHeightPx / naturalHeightPx;
-        zoomLevel = Math.min(zoomLevel, 1.12); // évite d'agrandir excessivement une fiche courte
-        doc.style.zoom = zoomLevel;
-    }
-
-    window.addEventListener('beforeprint', () => {
-        fitDocToOnePage('yaskawa-view');
-        fitDocToOnePage('generic-view');
-    });
-    window.addEventListener('afterprint', () => {
-        document.querySelectorAll('.yaskawa-doc').forEach((d) => { d.style.zoom = ''; });
-    });
 
 
     // ---------- STATUT DE FICHE (calculé automatiquement) ----------
