@@ -985,7 +985,6 @@
                 }
             });
             if (changed) {
-                cleanHistory();
                 updateHistoryList();
             }
         }, (err) => {
@@ -1124,6 +1123,7 @@
         persistDeletedIds();
         clearTimeout(cloudSaveTimers[id]);
         delete pendingCloudSaves[id]; // annule toute sauvegarde encore en attente pour cette fiche
+        deleteSupabasePhotosForFiche(id);
         if (!fbDb || !fbReady) {
             // Même principe que pour la sauvegarde : on retentera dès que la connexion sera prête,
             // au lieu d'abandonner silencieusement (ce qui faisait réapparaître la fiche).
@@ -1134,6 +1134,39 @@
             console.warn('Suppression cloud impossible, nouvelle tentative programmée :', err.message || err);
             pendingCloudDeletes.add(id);
         });
+    }
+
+    // Supprime les photos de cette fiche dans la banque d'images (Supabase), pour ne pas les
+    // laisser s'accumuler indéfiniment. Nécessite une politique "DELETE" autorisée sur le bucket
+    // (en plus de la politique "INSERT" déjà en place) — sinon, échoue silencieusement sans gêner
+    // la suppression de la fiche elle-même.
+    async function deleteSupabasePhotosForFiche(ficheId) {
+        try {
+            const listRes = await fetch(`${SUPABASE_URL}/storage/v1/object/list/${SUPABASE_BUCKET}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prefix: ficheId + '/' })
+            });
+            if (!listRes.ok) return;
+            const files = await listRes.json();
+            if (!Array.isArray(files) || files.length === 0) return;
+            const paths = files.map((f) => `${ficheId}/${f.name}`);
+            await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prefixes: paths })
+            });
+        } catch (err) {
+            console.warn('Nettoyage des photos (Supabase) impossible :', err.message || err);
+        }
     }
 
     function flushPendingCloudDeletes() {
@@ -1492,7 +1525,20 @@
         setTimeout(() => { const splash = document.getElementById('splashScreen'); if (splash) splash.remove(); }, 2900);
     }
     function filterAudits() { const query = document.getElementById('auditSearch').value.toLowerCase(); document.querySelectorAll('.report-item').forEach(item => { item.style.display = item.innerText.toLowerCase().includes(query) ? 'flex' : 'none'; }); }
-    function cleanHistory() { for (let i = 0; i < localStorage.length; i++) { const key = localStorage.key(i); if (key && (key.startsWith('audit_') || key.startsWith('yaskawa_') || key.startsWith('generic_'))) { const data = JSON.parse(localStorage.getItem(key)); if (!data.machine || data.machine === "Machine non spécifiée") localStorage.removeItem(key); } } }
+    // Ne nettoie que les brouillons vraiment abandonnés : jamais nommés ET vieux de plus d'1h
+    // (une fiche qu'on vient de créer, le temps de la remplir, ne doit jamais être supprimée).
+    function cleanHistory() {
+        const oneHourAgo = Date.now() - 60 * 60 * 1000;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith('audit_') || key.startsWith('yaskawa_') || key.startsWith('generic_'))) {
+                const data = JSON.parse(localStorage.getItem(key));
+                const isUnnamed = !data.machine || data.machine === "Machine non spécifiée";
+                const isOld = !data.timestamp || data.timestamp < oneHourAgo;
+                if (isUnnamed && isOld) localStorage.removeItem(key);
+            }
+        }
+    }
     
     function initTooltips() { 
         const tooltip = document.getElementById('tooltip'); 
