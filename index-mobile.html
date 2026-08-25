@@ -952,6 +952,7 @@
                     fbReady = true;
                     attachFirestoreListener();
                     updateSyncStatusUI();
+                    flushPendingCloudSaves();
                 }
             });
             firebase.auth().signInAnonymously().catch((err) => {
@@ -1080,9 +1081,17 @@
     // Les photos sont hébergées à part (Supabase Storage, gratuit) : on n'envoie jamais le contenu
     // base64 (trop lourd pour Firestore), seulement les liens légers une fois l'upload terminé.
     const deletedIds = new Set();
+    const pendingCloudSaves = {}; // fiches en attente si la connexion cloud n'était pas encore prête
 
     function cloudSave(id, data) {
-        if (!fbDb || deletedIds.has(id)) return;
+        if (deletedIds.has(id)) return;
+        if (!fbDb || !fbReady) {
+            // La connexion au cloud n'est pas encore prête (ouverture récente de l'app) : on
+            // mémorise cette sauvegarde pour la retenter dès que la connexion sera établie,
+            // au lieu de la perdre silencieusement.
+            pendingCloudSaves[id] = data;
+            return;
+        }
         clearTimeout(cloudSaveTimers[id]);
         cloudSaveTimers[id] = setTimeout(() => {
             // Sécurité : si la fiche a été supprimée entre-temps (pendant le délai d'attente),
@@ -1098,12 +1107,24 @@
             const json = JSON.stringify(cloudData);
             if (json.length > 900000) {
                 console.warn('Fiche trop volumineuse pour la synchronisation cloud :', id);
+                alert("⚠️ Cette fiche est trop volumineuse pour être synchronisée dans le cloud (probablement trop de photos). Elle reste sauvegardée sur cet appareil uniquement, mais ne sera pas visible sur tes autres appareils.");
                 return;
             }
             fbDb.collection('fiches').doc(id).set(cloudData).catch((err) => {
                 console.warn('Sauvegarde cloud impossible (reste enregistré en local) :', err.message || err);
             });
         }, 1500);
+    }
+
+    // Dès que la connexion au cloud devient prête, on retente toutes les sauvegardes qui avaient
+    // été mises en attente (fiches créées/modifiées avant que la connexion soit établie).
+    function flushPendingCloudSaves() {
+        const ids = Object.keys(pendingCloudSaves);
+        ids.forEach((id) => {
+            const data = pendingCloudSaves[id];
+            delete pendingCloudSaves[id];
+            cloudSave(id, data);
+        });
     }
 
     function cloudDelete(id) {
