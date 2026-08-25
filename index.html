@@ -932,6 +932,7 @@
                     fbReady = true;
                     attachFirestoreListener();
                     updateSyncStatusUI();
+                    flushPendingCloudDeletes();
                     flushPendingCloudSaves();
                 }
             });
@@ -960,6 +961,9 @@
                         changed = true;
                     }
                 } else {
+                    // Sécurité : si cette fiche a déjà été supprimée localement, on ignore toute
+                    // mise à jour la concernant (cas où la suppression cloud a pris du retard).
+                    if (deletedIds.has(change.doc.id)) return;
                     // On préserve les photos déjà présentes en local (elles ne sont jamais envoyées
                     // dans le cloud, voir cloudSave), pour ne pas les effacer lors de la réception
                     // d'une mise à jour distante du même rapport.
@@ -1060,7 +1064,13 @@
     // Écriture cloud différée (debounce) : évite d'envoyer une requête à chaque frappe clavier.
     // Les photos sont hébergées à part (Supabase Storage, gratuit) : on n'envoie jamais le contenu
     // base64 (trop lourd pour Firestore), seulement les liens légers une fois l'upload terminé.
-    const deletedIds = new Set();
+    // Mémorise les suppressions même après une actualisation de la page : sans ça, si la
+    // suppression cloud n'avait pas encore abouti (connexion pas prête), la fiche "supprimée"
+    // pouvait réapparaître au prochain chargement en la recevant à nouveau depuis le cloud.
+    const deletedIds = new Set(JSON.parse(localStorage.getItem('deletedFicheIds') || '[]'));
+    function persistDeletedIds() {
+        localStorage.setItem('deletedFicheIds', JSON.stringify(Array.from(deletedIds).slice(-500)));
+    }
     const pendingCloudSaves = {}; // fiches en attente si la connexion cloud n'était pas encore prête
 
     function cloudSave(id, data) {
@@ -1107,13 +1117,29 @@
         });
     }
 
+    const pendingCloudDeletes = new Set(deletedIds); // inclut aussi les suppressions des sessions précédentes qui n'auraient pas abouti
+
     function cloudDelete(id) {
         deletedIds.add(id);
+        persistDeletedIds();
         clearTimeout(cloudSaveTimers[id]);
-        if (!fbDb) return;
+        delete pendingCloudSaves[id]; // annule toute sauvegarde encore en attente pour cette fiche
+        if (!fbDb || !fbReady) {
+            // Même principe que pour la sauvegarde : on retentera dès que la connexion sera prête,
+            // au lieu d'abandonner silencieusement (ce qui faisait réapparaître la fiche).
+            pendingCloudDeletes.add(id);
+            return;
+        }
         fbDb.collection('fiches').doc(id).delete().catch((err) => {
-            console.warn('Suppression cloud impossible :', err.message || err);
+            console.warn('Suppression cloud impossible, nouvelle tentative programmée :', err.message || err);
+            pendingCloudDeletes.add(id);
         });
+    }
+
+    function flushPendingCloudDeletes() {
+        const ids = Array.from(pendingCloudDeletes);
+        pendingCloudDeletes.clear();
+        ids.forEach((id) => cloudDelete(id));
     }
 
     // ---------- NUMÉROTATION AUTOMATIQUE DES FICHES ----------
