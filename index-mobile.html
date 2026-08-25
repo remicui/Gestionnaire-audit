@@ -226,6 +226,9 @@
             #yaskawa-view .yaskawa-doc, #generic-view .yaskawa-doc {
                 overflow: visible !important;
             }
+            #yaskawa-view .y-visa-row, #generic-view .y-visa-row {
+                height: auto !important;
+            }
             #yaskawa-view .y-visa-cell, #generic-view .y-visa-cell {
                 overflow: visible !important;
             }
@@ -236,12 +239,12 @@
                 border: none !important;
             }
 
-            /* Compaction supplémentaire pour la fiche générique (plus de contenu que YASKAWA) */
-            #generic-view .y-table td { padding: 3px 6px !important; font-size: 9.5pt !important; line-height: 1.15 !important; }
-            #generic-view .y-table input, #generic-view .y-table textarea { font-size: 9.5pt !important; padding: 1px 2px !important; }
-            #generic-view .y-pieces-table td { padding: 2px 5px !important; }
-            #generic-view .y-table textarea[rows="6"] { height: 46px !important; }
-            #generic-view .y-table textarea[rows="2"] { height: 26px !important; }
+            /* Compaction légère pour la fiche générique (un peu plus de contenu que YASKAWA) */
+            #generic-view .y-table td { padding: 5px 8px !important; font-size: 10.5pt !important; line-height: 1.25 !important; }
+            #generic-view .y-table input, #generic-view .y-table textarea { font-size: 10.5pt !important; padding: 2px 3px !important; }
+            #generic-view .y-pieces-table td { padding: 4px 7px !important; }
+            #generic-view .y-table textarea[rows="6"] { height: 60px !important; }
+            #generic-view .y-table textarea[rows="2"] { height: 34px !important; }
         }
 
         /* ========================================================================
