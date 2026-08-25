@@ -2119,9 +2119,13 @@
                 // (src="") résout img.src vers l'URL de la page elle-même, pas vers une chaîne vide.
                 const rawSrc = img.getAttribute('src');
                 if (!rawSrc) return;
+                const cloudUrl = img.dataset.cloudUrl || '';
                 if (rawSrc.startsWith('data:')) {
-                    photosData.push(rawSrc);
-                    photoCloudUrls.push(img.dataset.cloudUrl || '');
+                    // Une fois la photo synchronisée dans le cloud, on garde son lien léger en
+                    // stockage local plutôt que la version lourde en base64, pour éviter de
+                    // saturer la mémoire du navigateur au fil des fiches accumulées.
+                    photosData.push(cloudUrl || rawSrc);
+                    photoCloudUrls.push(cloudUrl);
                 } else if (rawSrc.startsWith('http')) {
                     // Fiche reçue d'un autre appareil : seul le lien cloud est disponible (pas de base64 local)
                     photosData.push('');
@@ -2142,7 +2146,14 @@
             photos: photosData,
             photoCloudUrls: photoCloudUrls
         };
-        localStorage.setItem(id, JSON.stringify(data));
+        try {
+            localStorage.setItem(id, JSON.stringify(data));
+        } catch (err) {
+            console.warn('Sauvegarde locale impossible (mémoire du navigateur saturée) :', err);
+            if (err && err.name === 'QuotaExceededError') {
+                alert("⚠️ La mémoire du navigateur est pleine (trop de photos accumulées). La fiche va quand même être envoyée dans le cloud, mais essaie de libérer de la place : exporte puis supprime tes plus anciennes fiches avec photos depuis l'accueil.");
+            }
+        }
         cloudSave(id, data);
         showSaveIndicator();
     }
