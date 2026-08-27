@@ -651,7 +651,7 @@
                                 <div class="y-visa-label">
                                     Visa du client
                                     <div class="no-print y-clear-sig-btn">
-                                        <button type="button" class="btn-remove" onclick="clearSignature()">🗑️ Effacer la signature</button>
+                                        <button type="button" class="btn-remove" onclick="clearCanvasSignatureWithConfirm('y_signature')">🗑️ Effacer la signature</button>
                                     </div>
                                 </div>
                                 <div class="y-visa-cell">
@@ -860,7 +860,7 @@
                                 <div class="y-visa-label">
                                     Visa du client
                                     <div class="no-print y-clear-sig-btn">
-                                        <button type="button" class="btn-remove" onclick="clearSignatureGeneric()">🗑️ Effacer la signature</button>
+                                        <button type="button" class="btn-remove" onclick="clearCanvasSignatureWithConfirm('g_signature')">🗑️ Effacer la signature</button>
                                     </div>
                                 </div>
                                 <div class="y-visa-cell">
@@ -3006,12 +3006,24 @@
         initSignaturePadFor('y_signature', saveYaskawaReport);
         initSignaturePadFor('g_signature', saveGenericReport);
     }
+    // Réinitialisation interne (création/chargement de fiche) : jamais de confirmation, ce n'est
+    // pas une action de l'utilisateur qui efface volontairement une signature.
     function clearCanvasSignature(canvasId) {
         const canvas = document.getElementById(canvasId);
-        if (canvas.dataset.hasDrawing === 'true' && !confirm('Effacer la signature ? Cette action est irréversible.')) return;
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.dataset.hasDrawing = 'false';
+    }
+    // Clic sur le bouton "Effacer la signature" : demande confirmation s'il y a déjà un dessin.
+    function clearCanvasSignatureWithConfirm(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        if (canvas.dataset.hasDrawing === 'true' && !confirm('Effacer la signature ? Cette action est irréversible.')) return;
+        clearCanvasSignature(canvasId);
+        saveOnSignatureClear(canvasId);
+    }
+    function saveOnSignatureClear(canvasId) {
+        if (canvasId === 'y_signature' && document.getElementById('currentYaskawaId').value) saveYaskawaReport();
+        if (canvasId === 'g_signature' && document.getElementById('currentGenericId').value) saveGenericReport();
     }
     function clearSignature() { clearCanvasSignature('y_signature'); }
     function clearSignatureGeneric() { clearCanvasSignature('g_signature'); }
