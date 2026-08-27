@@ -1262,9 +1262,14 @@
         });
     }
 
+    // Ne propose en suggestion que les clients ayant déjà au moins une fiche signée (évite de
+    // proposer des noms tapés une seule fois par erreur, sur un brouillon jamais terminé).
     function refreshClientDatalist() {
         const dir = getClientDirectory();
-        const names = Object.keys(dir).sort();
+        const signedClients = new Set(
+            getAllFichesForStats().filter(f => f.status === 'signee').map(f => normalizeName(f.client))
+        );
+        const names = Object.keys(dir).filter(n => signedClients.has(normalizeName(n))).sort();
         ['clientDatalist'].forEach((listId) => {
             const list = document.getElementById(listId);
             if (!list) return;
@@ -2083,18 +2088,23 @@
         // Le regroupement tolère les différences de casse et d'espaces ("Rémi", "rémi ", "Rémi  ")
         // pour éviter de créer un dossier séparé à cause d'une simple faute de frappe.
         const groups = {};
-        const techNames = new Set();
+        const signedTechNames = new Set(); // pour les suggestions : uniquement noms "confirmés"
         audits.forEach(a => {
             const raw = (a.technicien && a.technicien.trim()) ? a.technicien.trim().replace(/\s+/g, ' ') : '';
             const key = raw ? raw.toLowerCase() : 'sans technicien';
             const label = raw || 'Sans technicien';
             if (!groups[key]) groups[key] = { label, items: [] };
             groups[key].items.push(a);
-            if (raw) techNames.add(raw);
+            if (raw) {
+                // Les audits classiques n'ont pas de notion de signature : on les garde toujours
+                // en suggestion. Pour YASKAWA/générique, on n'y ajoute le nom que si la fiche est signée.
+                const isYaskawaOrGeneric = a.id && (a.id.startsWith('yaskawa_') || a.id.startsWith('generic_'));
+                if (!isYaskawaOrGeneric || a.status === 'signee') signedTechNames.add(raw);
+            }
         });
         const techList = document.getElementById('technicienDatalist');
         if (techList) {
-            techList.innerHTML = Array.from(techNames).sort((a, b) => a.localeCompare(b, 'fr'))
+            techList.innerHTML = Array.from(signedTechNames).sort((a, b) => a.localeCompare(b, 'fr'))
                 .map(n => `<option value="${n.replace(/"/g, '&quot;')}"></option>`).join('');
         }
         const folderKeys = Object.keys(groups).sort((a, b) => {
