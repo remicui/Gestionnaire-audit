@@ -1942,7 +1942,7 @@
         let list = getKnowledgeList().sort((a, b) => b.timestamp - a.timestamp);
         if (filter && filter.trim()) {
             const q = filter.trim().toLowerCase();
-            list = list.filter(e => `${e.title} ${e.description} ${e.equipment}`.toLowerCase().includes(q));
+            list = list.filter(e => `${e.title} ${e.description} ${e.equipment} ${e.client || ''} ${e.machine || ''}`.toLowerCase().includes(q));
         }
         if (list.length === 0) {
             container.innerHTML = '<p style="color:#999; font-size:0.9em;">Aucune fiche pour le moment. Sois le premier à documenter une panne résolue !</p>';
@@ -1952,9 +1952,11 @@
             const date = new Date(e.timestamp).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const desc = String(e.description || '');
             const excerpt = desc.length > 90 ? desc.slice(0, 90) + '…' : desc;
+            const clientMachine = [e.client, e.machine].filter(Boolean).map(v => String(v).replace(/</g, '&lt;')).join(' — ');
             return `<div class="report-item" style="cursor:pointer;" onclick="showKnowledgeDetail('${e.id}')">
                 <div style="flex:1;">
                     <span class="report-info-main">🔧 ${String(e.title || '').replace(/</g, '&lt;')} ${e.equipment ? `<span class="status-badge" style="background:#16a085;">${String(e.equipment).replace(/</g, '&lt;')}</span>` : ''}</span>
+                    ${clientMachine ? `<span style="color:#2c527a; font-weight:bold; font-size:0.85em; display:block;">🏢 ${clientMachine}</span>` : ''}
                     <span style="color:#666; font-size:0.85em; display:block;">${excerpt.replace(/</g, '&lt;')}</span>
                     <div style="font-size:0.8em; color:#999;">${String(e.author || 'Anonyme').replace(/</g, '&lt;')} — ${date}</div>
                 </div>
@@ -1978,6 +1980,16 @@
             <input type="text" id="kbTitle" placeholder="Ex: Variateur ne démarre pas après coupure secteur" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; margin:6px 0 14px 0;">
             <label style="font-weight:bold; font-size:0.9em;">Équipement concerné :</label>
             <input type="text" id="kbEquipment" placeholder="Ex: Variateur Yaskawa, Automate Siemens..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; margin:6px 0 14px 0;">
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="font-weight:bold; font-size:0.9em;">Client (optionnel) :</label>
+                    <input type="text" id="kbClient" list="clientDatalist" placeholder="Ex: Pharmacie de la rive gauche" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; margin:6px 0 14px 0;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-weight:bold; font-size:0.9em;">Machine (optionnel) :</label>
+                    <input type="text" id="kbMachine" placeholder="Ex: Robot RG2 Ultra" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; margin:6px 0 14px 0;">
+                </div>
+            </div>
             <label style="font-weight:bold; font-size:0.9em;">Cause & solution :</label>
             <textarea id="kbDescription" placeholder="Décris le diagnostic et ce qui a résolu le problème..." style="width:100%; height:110px; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; margin:6px 0 14px 0;"></textarea>
             <label style="font-weight:bold; font-size:0.9em;">Ton nom (optionnel) :</label>
@@ -1995,11 +2007,13 @@
     function submitKnowledgeEntry() {
         const title = document.getElementById('kbTitle').value.trim();
         const equipment = document.getElementById('kbEquipment').value.trim();
+        const client = document.getElementById('kbClient').value.trim();
+        const machine = document.getElementById('kbMachine').value.trim();
         const description = document.getElementById('kbDescription').value.trim();
         const author = document.getElementById('kbAuthor').value.trim();
         if (!title || !description) { alert('Merci de renseigner au moins le titre et la description de la solution.'); return; }
         const id = 'kb_' + Date.now();
-        const entry = { id, title, equipment, description, author: author || 'Anonyme', timestamp: Date.now() };
+        const entry = { id, title, equipment, client, machine, description, author: author || 'Anonyme', timestamp: Date.now() };
         const list = getKnowledgeList();
         list.unshift(entry);
         localStorage.setItem('knowledgeList', JSON.stringify(list));
@@ -2024,9 +2038,11 @@
 
         const box = document.createElement('div');
         box.style.cssText = 'background:white; border-radius:12px; max-width:560px; width:100%; max-height:80vh; overflow-y:auto; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.4);';
+        const clientMachine = [entry.client, entry.machine].filter(Boolean).map(v => String(v).replace(/</g, '&lt;')).join(' — ');
         box.innerHTML = `
             <h3 style="color:var(--bleu-nuit-soft); margin-top:0;">🔧 ${String(entry.title || '').replace(/</g, '&lt;')}</h3>
             ${entry.equipment ? `<span class="status-badge" style="background:#16a085;">${String(entry.equipment).replace(/</g, '&lt;')}</span>` : ''}
+            ${clientMachine ? `<p style="color:#2c527a; font-weight:bold; margin:10px 0 0 0;">🏢 ${clientMachine}</p>` : ''}
             <p style="white-space:pre-wrap; line-height:1.5; word-break:break-word; margin-top:14px;">${String(entry.description || '').replace(/</g, '&lt;')}</p>
             <p style="font-size:0.85em; color:#999;">${String(entry.author || 'Anonyme').replace(/</g, '&lt;')} — ${date}</p>
             <div style="display:flex; gap:10px; margin-top:16px;">
