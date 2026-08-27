@@ -94,6 +94,8 @@
         .io-table th { background: var(--bleu-fond); }
         
         .axe-container { border: 1px solid var(--bleu-accent); padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #fdfdfe; border-left: 8px solid var(--jaune-bechameil); position: relative; }
+        .atelier-machine-container { border: 1px solid var(--bleu-accent); padding: 14px 16px; margin-bottom: 16px; border-radius: 6px; background: #fdfdfe; border-left: 6px solid var(--jaune-bechameil); position: relative; }
+        .atelier-machine-title { font-weight: bold; color: var(--bleu-nuit-soft); margin-bottom: 8px; font-size: 1.05em; }
         .axe-title { font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid var(--bleu-fond); padding-bottom: 8px; font-size: 1.1em; color: var(--bleu-nuit-soft); }
         .grid-axe { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .grid-axe div { display: flex; align-items: center; font-size: 0.85em; }
@@ -114,6 +116,7 @@
             .no-print, #saveMsg, .btn-remove, .btn-add { display: none !important; } 
             .page { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important; border-top: 10px solid var(--jaune-bechameil) !important; } 
             .axe-container { page-break-inside: avoid; break-inside: avoid; border: 1px solid var(--bleu-accent) !important; border-left: 8px solid var(--jaune-bechameil) !important; background: #fdfdfe !important; }
+            .atelier-machine-container { page-break-inside: avoid; break-inside: avoid; border: 1px solid var(--bleu-accent) !important; border-left: 6px solid var(--jaune-bechameil) !important; background: #fdfdfe !important; }
             .photo-wrapper { page-break-inside: avoid; break-inside: avoid; }
             h2 { background: var(--bleu-nuit-soft) !important; color: var(--jaune-bechameil) !important; page-break-after: avoid; padding: 10px 15px !important; border-radius: 4px !important; }
             .io-table th { background: var(--bleu-fond) !important; }
@@ -935,94 +938,13 @@
                         </div>
                     </div>
 
-                    <!-- BLOC MACHINE -->
-                    <div class="y-block">
-                        <div class="y-sidebar"><span>MACHINE</span></div>
-                        <div class="y-content">
-                            <table class="y-table">
-                                <colgroup>
-                                    <col style="width:28%;">
-                                    <col style="width:72%;">
-                                </colgroup>
-                                <tr>
-                                    <td class="y-label">Désignation de la machine</td>
-                                    <td><input type="text" id="at_machine_designation" placeholder="Ex: Presse hydraulique ligne 2"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label">Marque / Constructeur</td>
-                                    <td><input type="text" id="at_machine_marque"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label">Modèle / Référence</td>
-                                    <td><input type="text" id="at_machine_modele"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label">N° de série</td>
-                                    <td><input type="text" id="at_machine_serie"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label">Année de mise en service</td>
-                                    <td><input type="text" id="at_machine_annee" style="width:120px;"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label">Emplacement dans l'atelier</td>
-                                    <td><input type="text" id="at_machine_emplacement"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label">Automate (marque / référence)</td>
-                                    <td><input type="text" id="at_automate"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label">Variateur(s) (marque / référence)</td>
-                                    <td><input type="text" id="at_variateur"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label">Alimentation électrique (tension / puissance)</td>
-                                    <td><input type="text" id="at_alimentation"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label">État général</td>
-                                    <td>
-                                        <label class="y-checkbox-label"><input type="checkbox" id="at_etat_bon" class="y-checkbox"> Bon</label>
-                                        &nbsp;&nbsp;<label class="y-checkbox-label"><input type="checkbox" id="at_etat_moyen" class="y-checkbox"> Moyen</label>
-                                        &nbsp;&nbsp;<label class="y-checkbox-label"><input type="checkbox" id="at_etat_mauvais" class="y-checkbox"> Mauvais</label>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label" style="vertical-align:top;">Anomalies observées / points de vigilance</td>
-                                    <td style="vertical-align:top;"><textarea id="at_anomalies" rows="4"></textarea></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-label" style="vertical-align:top;">Recommandations</td>
-                                    <td style="vertical-align:top;"><textarea id="at_recommandations" rows="4"></textarea></td>
-                                </tr>
-                            </table>
-
-                            <div class="y-label" style="margin-top:12px;">Photos de la machine</div>
-                            <div class="photo-grid" id="atelierPhotoGrid"></div>
-                            <div class="no-print" style="text-align:center; margin-top:10px;">
-                                <button type="button" class="btn-add" onclick="addAtelierPhoto();">➕ AJOUTER UNE PHOTO</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- BLOC CLIENT -->
+                    <!-- BLOC MACHINE(S) — répétable, une machine par bloc -->
                     <div class="y-block y-block-last">
-                        <div class="y-sidebar"><span>CLIENT</span></div>
+                        <div class="y-sidebar"><span>MACHINE(S)</span></div>
                         <div class="y-content">
-                            <div class="y-visa-row">
-                                <div class="y-visa-label">
-                                    Visa du client
-                                    <div class="no-print y-clear-sig-btn">
-                                        <button type="button" class="btn-remove" onclick="clearCanvasSignatureWithConfirm('at_signature')">🗑️ Effacer la signature</button>
-                                    </div>
-                                </div>
-                                <div class="y-visa-cell">
-                                    <div class="y-visa-header">Nom et qualité du signataire, tampon et signature</div>
-                                    <input type="text" id="at_visa_nom" placeholder="Nom et qualité du signataire" class="y-visa-nom-input">
-                                    <canvas id="at_signature" width="680" height="140"></canvas>
-                                    <div class="y-fill-spacer"></div>
-                                </div>
+                            <div id="atelier-machines-list"></div>
+                            <div class="no-print" style="text-align:center; margin-top:10px;">
+                                <button type="button" class="btn-add" onclick="addAtelierMachine();">➕ AJOUTER UNE MACHINE</button>
                             </div>
                         </div>
                     </div>
@@ -1418,10 +1340,13 @@
 
     // Ne propose en suggestion que les clients ayant déjà au moins une fiche signée (évite de
     // proposer des noms tapés une seule fois par erreur, sur un brouillon jamais terminé).
+    // Exception : la fiche Audit Atelier n'a pas de signature, on retient donc "Terminée" pour elle.
     function refreshClientDatalist() {
         const dir = getClientDirectory();
         const signedClients = new Set(
-            getAllFichesForStats().filter(f => f.status === 'signee').map(f => normalizeName(f.client))
+            getAllFichesForStats()
+                .filter(f => f.status === 'signee' || (f.id && f.id.startsWith('atelier_') && f.status === 'terminee'))
+                .map(f => normalizeName(f.client))
         );
         const names = Object.keys(dir).filter(n => signedClients.has(normalizeName(n))).sort();
         ['clientDatalist'].forEach((listId) => {
@@ -2250,7 +2175,7 @@
             if (raw) {
                 // Les audits classiques n'ont pas de notion de signature : on les garde toujours
                 // en suggestion. Pour YASKAWA/générique, on n'y ajoute le nom que si la fiche est signée.
-                const isYaskawaOrGeneric = a.id && (a.id.startsWith('yaskawa_') || a.id.startsWith('generic_') || a.id.startsWith('atelier_'));
+                const isYaskawaOrGeneric = a.id && (a.id.startsWith('yaskawa_') || a.id.startsWith('generic_'));
                 if (!isYaskawaOrGeneric || a.status === 'signee') signedTechNames.add(raw);
             }
         });
@@ -3136,15 +3061,80 @@
     // ---------- AUDIT ATELIER / MACHINE ----------
     let atelierPhotoCounter = 0;
 
-    function addAtelierPhoto(src = null, cloudUrl = '') {
+    // Un bloc "machine" répétable, sur le même principe que les axes moteur de l'audit
+    // automatisme : chaque machine ajoutée reprend tous les champs + sa propre galerie photo.
+    function addAtelierMachine() {
+        const list = document.getElementById('atelier-machines-list');
+        const idx = list.children.length;
+        const div = document.createElement('div');
+        div.className = 'atelier-machine-container';
+        div.innerHTML = `<button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveAtelierReport();" style="position:absolute; top:12px; right:12px;">❌</button>
+            <div class="atelier-machine-title">MACHINE N°${idx + 1}</div>
+            <table class="y-table">
+                <colgroup>
+                    <col style="width:28%;">
+                    <col style="width:72%;">
+                </colgroup>
+                <tr>
+                    <td class="y-label">Désignation de la machine</td>
+                    <td><input type="text" id="at_machine_designation_${idx}" placeholder="Ex: Presse hydraulique ligne 2"></td>
+                </tr>
+                <tr>
+                    <td class="y-label">Marque / Constructeur</td>
+                    <td><input type="text" id="at_machine_marque_${idx}"></td>
+                </tr>
+                <tr>
+                    <td class="y-label">Modèle / Référence</td>
+                    <td><input type="text" id="at_machine_modele_${idx}"></td>
+                </tr>
+                <tr>
+                    <td class="y-label">N° de série</td>
+                    <td><input type="text" id="at_machine_serie_${idx}"></td>
+                </tr>
+                <tr>
+                    <td class="y-label">Fonction / utilisation de la machine</td>
+                    <td><input type="text" id="at_machine_fonction_${idx}"></td>
+                </tr>
+                <tr>
+                    <td class="y-label">Alimentation électrique (tension / puissance)</td>
+                    <td><input type="text" id="at_alimentation_${idx}"></td>
+                </tr>
+                <tr>
+                    <td class="y-label">État général</td>
+                    <td>
+                        <label class="y-checkbox-label"><input type="checkbox" id="at_etat_bon_${idx}" class="y-checkbox"> Bon</label>
+                        &nbsp;&nbsp;<label class="y-checkbox-label"><input type="checkbox" id="at_etat_moyen_${idx}" class="y-checkbox"> Moyen</label>
+                        &nbsp;&nbsp;<label class="y-checkbox-label"><input type="checkbox" id="at_etat_mauvais_${idx}" class="y-checkbox"> Mauvais</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="y-label" style="vertical-align:top;">Anomalies observées / points de vigilance</td>
+                    <td style="vertical-align:top;"><textarea id="at_anomalies_${idx}" rows="4"></textarea></td>
+                </tr>
+                <tr>
+                    <td class="y-label" style="vertical-align:top;">Recommandations</td>
+                    <td style="vertical-align:top;"><textarea id="at_recommandations_${idx}" rows="4"></textarea></td>
+                </tr>
+            </table>
+            <div class="y-label" style="margin-top:12px;">Photos de la machine</div>
+            <div class="photo-grid" id="atelierPhotoGrid_${idx}"></div>
+            <div class="no-print" style="text-align:center; margin-top:10px;">
+                <button type="button" class="btn-add" onclick="addAtelierPhoto(null, '', ${idx});">➕ AJOUTER UNE PHOTO</button>
+            </div>`;
+        list.appendChild(div);
+    }
+
+    function addAtelierPhoto(src = null, cloudUrl = '', machineIdx = 0) {
         atelierPhotoCounter++;
-        const grid = document.getElementById('atelierPhotoGrid');
+        const localId = atelierPhotoCounter;
+        const grid = document.getElementById('atelierPhotoGrid_' + machineIdx);
+        if (!grid) return;
         const div = document.createElement('div');
         div.className = 'photo-wrapper';
-        div.innerHTML = `<div class="photo-item" id="atp_item_${atelierPhotoCounter}" onclick="document.getElementById('atp_img_${atelierPhotoCounter}').click()">
-            <span id="atp_txt_${atelierPhotoCounter}" style="${src ? 'display:none' : ''}">📸 Cliquez pour ajouter</span>
-            <img id="atp_prev_${atelierPhotoCounter}" src="${src || ''}" data-cloud-url="${cloudUrl || ''}" style="${src ? 'display:block' : 'display:none'}">
-            <input type="file" id="atp_img_${atelierPhotoCounter}" accept="image/*" style="display:none" onchange="previewAtelierImg(this, ${atelierPhotoCounter})">
+        div.innerHTML = `<div class="photo-item" id="atp_item_${localId}" onclick="document.getElementById('atp_img_${localId}').click()">
+            <span id="atp_txt_${localId}" style="${src ? 'display:none' : ''}">📸 Cliquez pour ajouter</span>
+            <img id="atp_prev_${localId}" src="${src || ''}" data-cloud-url="${cloudUrl || ''}" style="${src ? 'display:block' : 'display:none'}">
+            <input type="file" id="atp_img_${localId}" accept="image/*" style="display:none" onchange="previewAtelierImg(this, ${localId})">
         </div><button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveAtelierReport();" style="position:absolute; top:10px; right:10px;">❌</button>`;
         grid.appendChild(div);
     }
@@ -3196,9 +3186,9 @@
         document.getElementById('currentAtelierId').value = id;
         document.getElementById('at_date').value = new Date().toISOString().split('T')[0];
         document.getElementById('at_ficheNum').value = '…';
-        clearCanvasSignature('at_signature');
-        document.getElementById('atelierPhotoGrid').innerHTML = '';
+        document.getElementById('atelier-machines-list').innerHTML = '';
         atelierPhotoCounter = 0;
+        addAtelierMachine();
         renderClientSuggestion('', 'at_clientHistoryAlert', null);
         showView('atelier-view');
         getNextFicheNumber('M').then((num) => {
@@ -3211,37 +3201,44 @@
 
     function saveAtelierReport() {
         const id = document.getElementById('currentAtelierId').value; if (!id) return;
-        const canvas = document.getElementById('at_signature');
-        const photosData = [];
-        const photoCloudUrls = [];
+        const machineCount = document.querySelectorAll('#atelier-machines-list .atelier-machine-container').length;
+        const photosByMachine = [];
+        const photoCloudUrlsByMachine = [];
         try {
-            document.querySelectorAll('#atelierPhotoGrid .photo-wrapper img').forEach(img => {
-                const rawSrc = img.getAttribute('src');
-                if (!rawSrc) return;
-                const cloudUrl = img.dataset.cloudUrl || '';
-                if (rawSrc.startsWith('data:')) {
-                    // Une fois la photo synchronisée dans le cloud, on garde son lien léger en
-                    // stockage local plutôt que la version lourde en base64.
-                    photosData.push(cloudUrl || rawSrc);
-                    photoCloudUrls.push(cloudUrl);
-                } else if (rawSrc.startsWith('http')) {
-                    photosData.push('');
-                    photoCloudUrls.push(rawSrc);
-                }
-            });
+            for (let m = 0; m < machineCount; m++) {
+                const mPhotos = [];
+                const mCloudUrls = [];
+                document.querySelectorAll('#atelierPhotoGrid_' + m + ' .photo-wrapper img').forEach(img => {
+                    const rawSrc = img.getAttribute('src');
+                    if (!rawSrc) return;
+                    const cloudUrl = img.dataset.cloudUrl || '';
+                    if (rawSrc.startsWith('data:')) {
+                        // Une fois la photo synchronisée dans le cloud, on garde son lien léger en
+                        // stockage local plutôt que la version lourde en base64.
+                        mPhotos.push(cloudUrl || rawSrc);
+                        mCloudUrls.push(cloudUrl);
+                    } else if (rawSrc.startsWith('http')) {
+                        mPhotos.push('');
+                        mCloudUrls.push(rawSrc);
+                    }
+                });
+                photosByMachine.push(mPhotos);
+                photoCloudUrlsByMachine.push(mCloudUrls);
+            }
         } catch (err) {
             console.warn('Erreur lors de la collecte des photos, la fiche sera sauvegardée sans elles :', err);
         }
+        const firstMachine = document.getElementById('at_machine_designation_0');
         const data = {
             id: id, type: 'AUDIT ATELIER MACHINE', timestamp: Date.now(),
             client: document.getElementById('at_client_int').value || "Société Inconnue",
-            machine: document.getElementById('at_machine_designation').value || ('Fiche N° ' + (document.getElementById('at_ficheNum').value || id)),
+            machine: (firstMachine && firstMachine.value) || ('Fiche N° ' + (document.getElementById('at_ficheNum').value || id)),
             technicien: (document.getElementById('at_technicien').value || '').trim(),
-            status: computeFicheStatus(canvas, document.getElementById('at_client_int').value, document.getElementById('at_machine_designation').value),
+            status: computeFicheStatus(null, document.getElementById('at_client_int').value, firstMachine ? firstMachine.value : ''),
+            machineCount: machineCount,
             inputs: Array.from(document.querySelectorAll('#atelierForm input:not([type="file"]), #atelierForm textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
-            signature: canvas.dataset.hasDrawing === 'true' ? canvas.toDataURL('image/png') : null,
-            photos: photosData,
-            photoCloudUrls: photoCloudUrls
+            photosByMachine: photosByMachine,
+            photoCloudUrlsByMachine: photoCloudUrlsByMachine
         };
         try {
             localStorage.setItem(id, JSON.stringify(data));
@@ -3265,23 +3262,19 @@
         const data = JSON.parse(localStorage.getItem(id));
         document.getElementById('atelierForm').reset();
         document.getElementById('currentAtelierId').value = id;
-        clearCanvasSignature('at_signature');
-        document.getElementById('atelierPhotoGrid').innerHTML = '';
+        document.getElementById('atelier-machines-list').innerHTML = '';
         atelierPhotoCounter = 0;
-        if (data.photos) {
-            data.photos.forEach((pSrc, idx) => {
-                const cloudUrl = (pSrc && pSrc.startsWith('http')) ? pSrc : ((data.photoCloudUrls && data.photoCloudUrls[idx]) || '');
-                addAtelierPhoto(pSrc, cloudUrl);
+        const machineCount = Math.max(data.machineCount || (data.photosByMachine ? data.photosByMachine.length : 1), 1);
+        for (let m = 0; m < machineCount; m++) addAtelierMachine();
+        if (data.photosByMachine) {
+            data.photosByMachine.forEach((photos, m) => {
+                photos.forEach((pSrc, idx) => {
+                    const cloudUrl = (pSrc && pSrc.startsWith('http')) ? pSrc : ((data.photoCloudUrlsByMachine && data.photoCloudUrlsByMachine[m] && data.photoCloudUrlsByMachine[m][idx]) || '');
+                    addAtelierPhoto(pSrc, cloudUrl, m);
+                });
             });
         }
         data.inputs.forEach(item => { const el = document.getElementById(item.id); if (el) { if (el.type === 'checkbox' || el.type === 'radio') el.checked = item.val; else el.value = item.val; } });
-        if (data.signature) {
-            const canvas = document.getElementById('at_signature');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            img.onload = function () { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); canvas.dataset.hasDrawing = 'true'; };
-            img.src = data.signature;
-        }
         renderClientSuggestion(document.getElementById('at_client_int').value, 'at_clientHistoryAlert', id);
         showView('atelier-view');
     }
@@ -3319,27 +3312,24 @@
         lines.push(`Objet : ${v('at_objet')}`);
         lines.push(`Technicien(s) : ${v('at_technicien')}`);
         lines.push('');
-        lines.push('--- MACHINE ---');
-        lines.push(`Désignation : ${v('at_machine_designation')}`);
-        lines.push(`Marque / Constructeur : ${v('at_machine_marque')}`);
-        lines.push(`Modèle / Référence : ${v('at_machine_modele')}`);
-        lines.push(`N° de série : ${v('at_machine_serie')}`);
-        lines.push(`Année de mise en service : ${v('at_machine_annee')}`);
-        lines.push(`Emplacement : ${v('at_machine_emplacement')}`);
-        lines.push(`Automate : ${v('at_automate')}`);
-        lines.push(`Variateur(s) : ${v('at_variateur')}`);
-        lines.push(`Alimentation électrique : ${v('at_alimentation')}`);
-        const etats = [];
-        if (c('at_etat_bon')) etats.push('Bon');
-        if (c('at_etat_moyen')) etats.push('Moyen');
-        if (c('at_etat_mauvais')) etats.push('Mauvais');
-        lines.push(`État général : ${etats.join(', ') || '-'}`);
-        lines.push(`Anomalies observées / points de vigilance : ${v('at_anomalies')}`);
-        lines.push(`Recommandations : ${v('at_recommandations')}`);
-        lines.push('');
-        lines.push('--- CLIENT ---');
-        lines.push(`Visa du client : ${v('at_visa_nom')} (signature sur le PDF joint)`);
-        lines.push('');
+        const machineCount = document.querySelectorAll('#atelier-machines-list .atelier-machine-container').length;
+        for (let m = 0; m < machineCount; m++) {
+            lines.push(`--- MACHINE N°${m + 1} ---`);
+            lines.push(`Désignation : ${v('at_machine_designation_' + m)}`);
+            lines.push(`Marque / Constructeur : ${v('at_machine_marque_' + m)}`);
+            lines.push(`Modèle / Référence : ${v('at_machine_modele_' + m)}`);
+            lines.push(`N° de série : ${v('at_machine_serie_' + m)}`);
+            lines.push(`Fonction / utilisation : ${v('at_machine_fonction_' + m)}`);
+            lines.push(`Alimentation électrique : ${v('at_alimentation_' + m)}`);
+            const etats = [];
+            if (c('at_etat_bon_' + m)) etats.push('Bon');
+            if (c('at_etat_moyen_' + m)) etats.push('Moyen');
+            if (c('at_etat_mauvais_' + m)) etats.push('Mauvais');
+            lines.push(`État général : ${etats.join(', ') || '-'}`);
+            lines.push(`Anomalies observées / points de vigilance : ${v('at_anomalies_' + m)}`);
+            lines.push(`Recommandations : ${v('at_recommandations_' + m)}`);
+            lines.push('');
+        }
         lines.push('SARL BECHAMEIL - 41 rue Lafayette - 58200 COSNE-SUR-LOIRE');
         lines.push('SIRET 830836722 00033 - TVA FR21830836722');
         lines.push('Tél : 07 84 54 84 67 - Mail : contact@bechameil.com - Site http://bechameil.com');
@@ -3350,22 +3340,6 @@
     async function generateAtelierPdfBlob() {
         const docEl = document.querySelector('#atelier-view .yaskawa-doc');
         const restoreFns = [];
-
-        // Signature -> image figée (comme YASKAWA/générique)
-        const sigCanvas = document.getElementById('at_signature');
-        if (sigCanvas) {
-            const rect = sigCanvas.getBoundingClientRect();
-            const img = document.createElement('img');
-            img.src = sigCanvas.toDataURL('image/png');
-            img.style.width = rect.width + 'px';
-            img.style.height = rect.height + 'px';
-            img.style.display = 'block';
-            img.style.border = 'none';
-            img.style.background = 'transparent';
-            img.style.margin = window.getComputedStyle(sigCanvas).margin;
-            sigCanvas.replaceWith(img);
-            restoreFns.push(() => img.replaceWith(sigCanvas));
-        }
 
         // Zones de texte -> blocs de texte simples (n'affichent jamais rien de coupé)
         document.querySelectorAll('#atelier-view textarea').forEach((el) => {
@@ -3423,15 +3397,6 @@
                 w.style.display = 'none';
                 restoreFns.push(() => { w.style.display = prevDisplay; });
             }
-        });
-
-        // Titre "Nom et qualité du signataire..." : marges figées pour un espacement fiable
-        document.querySelectorAll('#atelier-view .y-visa-header').forEach((el) => {
-            const computed = window.getComputedStyle(el);
-            const prevMarginTop = el.style.marginTop, prevMarginBottom = el.style.marginBottom;
-            el.style.marginTop = computed.marginTop;
-            el.style.marginBottom = computed.marginBottom;
-            restoreFns.push(() => { el.style.marginTop = prevMarginTop; el.style.marginBottom = prevMarginBottom; });
         });
 
         // Masquer les éléments d'interface absents du document final
@@ -3565,7 +3530,6 @@
     function initSignaturePad() {
         initSignaturePadFor('y_signature', saveYaskawaReport);
         initSignaturePadFor('g_signature', saveGenericReport);
-        initSignaturePadFor('at_signature', saveAtelierReport);
     }
     // Réinitialisation interne (création/chargement de fiche) : jamais de confirmation, ce n'est
     // pas une action de l'utilisateur qui efface volontairement une signature.
@@ -3585,7 +3549,6 @@
     function saveOnSignatureClear(canvasId) {
         if (canvasId === 'y_signature' && document.getElementById('currentYaskawaId').value) saveYaskawaReport();
         if (canvasId === 'g_signature' && document.getElementById('currentGenericId').value) saveGenericReport();
-        if (canvasId === 'at_signature' && document.getElementById('currentAtelierId').value) saveAtelierReport();
     }
     function clearSignature() { clearCanvasSignature('y_signature'); }
     function clearSignatureGeneric() { clearCanvasSignature('g_signature'); }
