@@ -2709,13 +2709,23 @@
             restoreFns.push(() => { el.style.marginTop = prevMarginTop; el.style.marginBottom = prevMarginBottom; });
         });
 
-        document.querySelectorAll('#yaskawa-view .y-sidebar span, #yaskawa-view .y-horaires-label').forEach((el) => {
+        document.querySelectorAll('#yaskawa-view .y-sidebar span').forEach((el) => {
             const prevStyle = el.getAttribute('style');
             el.style.writingMode = 'horizontal-tb';
             el.style.transform = 'rotate(-90deg)';
             el.style.display = 'inline-block';
             el.style.whiteSpace = 'nowrap';
             restoreFns.push(() => el.setAttribute('style', prevStyle || ''));
+        });
+
+        // Cellule "Horaires" : texte vertical dans une cellule à rowspan="5". On ne tourne
+        // jamais la cellule elle-même (ça casserait son rowspan et décalerait tout le tableau) :
+        // on enveloppe son texte dans un span interne, et c'est ce span qu'on fait pivoter.
+        document.querySelectorAll('#yaskawa-view .y-horaires-label').forEach((td) => {
+            const prevHTML = td.innerHTML;
+            const text = td.textContent;
+            td.innerHTML = `<span style="writing-mode:horizontal-tb; display:inline-block; white-space:nowrap; transform:rotate(-90deg); font-weight:bold;">${text}</span>`;
+            restoreFns.push(() => { td.innerHTML = prevHTML; });
         });
 
         document.querySelectorAll('#yaskawa-view .no-print').forEach((el) => {
