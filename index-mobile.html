@@ -2726,18 +2726,18 @@
         });
 
         // Cellule "Horaires" : texte vertical dans une cellule à rowspan="5". On ne tourne
-        // jamais la cellule elle-même (ça casserait son rowspan et décalerait tout le tableau) :
-        // on neutralise d'abord la rotation héritée de sa classe CSS, puis on enveloppe son texte
-        // dans un span interne, et c'est ce span qu'on fait pivoter, bien centré dans la cellule.
+        // jamais la cellule elle-même (ça casserait son rowspan et décalerait tout le tableau).
+        // Une simple rotation ne modifie que l'apparence visuelle, pas l'espace réservé dans la
+        // page : le texte débordait donc sur les lignes voisines. On le positionne à la place en
+        // absolu, centré au milieu exact de la cellule, quelle que soit sa hauteur réelle.
         document.querySelectorAll('#yaskawa-view .y-horaires-label').forEach((td) => {
             const prevStyle = td.getAttribute('style');
             const prevHTML = td.innerHTML;
             td.style.writingMode = 'horizontal-tb';
             td.style.transform = 'none';
-            td.style.textAlign = 'center';
-            td.style.verticalAlign = 'middle';
+            td.style.position = 'relative';
             const text = td.textContent;
-            td.innerHTML = `<span style="writing-mode:horizontal-tb; display:inline-block; white-space:nowrap; transform:rotate(-90deg); font-weight:bold;">${text}</span>`;
+            td.innerHTML = `<span style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-90deg); white-space:nowrap; font-weight:bold;">${text}</span>`;
             restoreFns.push(() => { td.innerHTML = prevHTML; td.setAttribute('style', prevStyle || ''); });
         });
 
