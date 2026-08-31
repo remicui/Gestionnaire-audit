@@ -171,12 +171,10 @@
         .y-checkbox { width: 16px; height: 16px; vertical-align: middle; margin: 0; cursor: pointer; }
 
         /* ---------- FICHE FERWOOD (identité visuelle du client, pas celle de Bechameil) ---------- */
-        .fw-doc { border: 1px solid #000; font-family: 'Segoe UI', Arial, sans-serif; background: #fff; }
+        .fw-doc { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; }
         .fw-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 14px 16px 8px 16px; gap: 20px; }
         .fw-logo { max-height: 55px; width: auto; flex-shrink: 0; }
         .fw-company-info { text-align: right; font-size: 0.72em; color: #062A4E; line-height: 1.5; white-space: nowrap; }
-        .fw-fichenum { text-align: center; font-weight: bold; font-size: 1.05em; color: #062A4E; padding: 8px 0; border-top: 2px solid #062A4E; border-bottom: 2px solid #062A4E; }
-        .fw-fichenum input { border: none; border-bottom: 1px solid #062A4E; background: transparent; font-weight: bold; color: #062A4E; text-align: center; width: 140px; font-size: 1em; }
         .fw-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .fw-table td { border: 1px solid #000; padding: 5px 9px; font-size: 0.82em; vertical-align: middle; }
         .fw-section-header { background: #D9D9D9; font-weight: bold; text-transform: uppercase; font-size: 0.85em; padding: 6px 10px !important; }
@@ -193,7 +191,6 @@
         .fw-signature-block { flex: 1; }
         .fw-signature-title { font-weight: bold; margin-bottom: 6px; font-size: 0.9em; }
         .fw-signature-line { border-top: 1px solid #000; margin-top: 6px; width: 90%; }
-        .fw-signature-footer { font-size: 0.72em; color: #000; margin-top: 8px; line-height: 1.5; }
         #fx_signature_tech, #fx_signature_client { border: 1px dashed #999; background: #fff; width: 100%; max-width: 320px; height: 110px; display: block; touch-action: none; }
         .fw-clear-sig-btn { margin-bottom: 6px; }
         .fw-clear-sig-btn button { background: #c0392b; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; }
@@ -1020,7 +1017,7 @@
                             P.IVA e COD. FISCALE IT 02996140048
                         </div>
                     </div>
-                    <div class="fw-fichenum">FICHE D'INTERVENTION N° <input type="text" id="fx_ficheNum" placeholder=""></div>
+
 
                     <table class="fw-table">
                         <tr><td class="fw-section-header" colspan="2">DESCRIPTION DE L'INTERVENTION</td></tr>
@@ -1066,7 +1063,7 @@
                             En reconnaissant et en signant ce document, vous acceptez l'engagement de restituer tous les équipements et/ou outils de travail fournis par Ferwood pour l'intervention.<br>
                             L'entière responsabilité est assumée en cas de non-retour, de dommage ou de perte, conditions pour lesquelles des frais d'indemnisation seront facturés.
                         </td></tr>
-                        <tr><td colspan="2" style="vertical-align:top;"><textarea id="fx_materiel" rows="4" placeholder="Liste du matériel fourni..."></textarea></td></tr>
+
                     </table>
 
                     <!-- PAGE 2 -->
@@ -1261,13 +1258,6 @@
                             </div>
                             <canvas id="fx_signature_tech" width="320" height="110"></canvas>
                             <div class="fw-signature-line"></div>
-                            <div class="fw-signature-footer">
-                                <strong>FERWOOD SPA</strong><br>
-                                Via Langhe 4/A - Frazione POLLENZO<br>
-                                12042 BRA (CN)<br>
-                                Tel. +39 (0) 172 474073 - Fax +39 (0) 172 471442<br>
-                                Part. IVA 02996140048
-                            </div>
                         </div>
                         <div class="fw-signature-block">
                             <div class="fw-signature-title">Signature et cachet du client</div>
@@ -3877,7 +3867,7 @@
         const data = {
             id: id, type: 'FICHE FERWOOD', timestamp: Date.now(),
             client: document.getElementById('fx_client').value || "Société Inconnue",
-            machine: document.getElementById('fx_code_ferwood').value || ('Fiche N° ' + (document.getElementById('fx_ficheNum').value || id)),
+            machine: document.getElementById('fx_code_ferwood').value || ('Fiche du ' + new Date().toLocaleDateString('fr-FR')),
             technicien: (document.getElementById('fx_referent').value || '').trim(),
             status: computeFicheStatus(canvasClient, document.getElementById('fx_client').value, document.getElementById('fx_code_ferwood').value),
             inputs: Array.from(document.querySelectorAll('#ferwoodForm input:not([type="file"]), #ferwoodForm textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
@@ -3948,9 +3938,9 @@
     function buildFerwoodEmailText() {
         const v = (id) => { const el = document.getElementById(id); return el ? (el.value || '') : ''; };
         const c = (id) => { const el = document.getElementById(id); return el ? el.checked : false; };
-        const ficheNum = v('fx_ficheNum') || '(non renseigné)';
+        const ficheNum = new Date().toLocaleDateString('fr-FR');
         const lines = [];
-        lines.push(`FICHE FERWOOD N° ${ficheNum}`);
+        lines.push(`FICHE FERWOOD — ${ficheNum}`);
         lines.push('');
         lines.push('--- DESCRIPTION DE L\'INTERVENTION ---');
         lines.push(v('fx_description'));
@@ -3977,9 +3967,6 @@
         lines.push(`Nourriture — FerWood : ${c('fx_frais_nourriture_ferwood') ? 'X' : '-'} / Client : ${c('fx_frais_nourriture_client') ? 'X' : '-'}`);
         lines.push(`Nuit — FerWood : ${c('fx_frais_nuit_ferwood') ? 'X' : '-'} / Client : ${c('fx_frais_nuit_client') ? 'X' : '-'}`);
         lines.push(`Voyager — FerWood : ${c('fx_frais_voyage_ferwood') ? 'X' : '-'} / Client : ${c('fx_frais_voyage_client') ? 'X' : '-'}`);
-        lines.push('');
-        lines.push('--- MATÉRIEL D\'INTERVENTION ---');
-        lines.push(v('fx_materiel'));
         lines.push('');
         lines.push('--- SEMAINE ---');
         for (let i = 0; i < 14; i++) {
@@ -4060,17 +4047,6 @@
             restoreFns.push(() => span.replaceWith(el));
         });
 
-        // N° de fiche (dans l'en-tête, hors tableau)
-        const ficheNumEl = document.getElementById('fx_ficheNum');
-        if (ficheNumEl) {
-            const span = document.createElement('span');
-            span.textContent = ficheNumEl.value || '';
-            span.style.fontWeight = 'bold';
-            span.style.color = '#062A4E';
-            ficheNumEl.replaceWith(span);
-            restoreFns.push(() => span.replaceWith(ficheNumEl));
-        }
-
         document.querySelectorAll('#ferwood-view .no-print').forEach((el) => {
             const prevDisplay = el.style.display;
             el.style.display = 'none';
@@ -4128,9 +4104,11 @@
         if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Génération du PDF...'; }
 
         try {
-            const { ficheNum, client, body } = buildFerwoodEmailText();
-            const subject = `Fiche Ferwood${client ? ' - ' + client : (' N° ' + ficheNum)}`;
-            const fileName = `Fiche_Ferwood_${ficheNum}.pdf`;
+            const { client, body } = buildFerwoodEmailText();
+            const dateStr = new Date().toISOString().split('T')[0];
+            const subject = `Fiche Ferwood${client ? ' - ' + client : ''}`;
+            const safeClient = (client || 'sans_nom').replace(/[^a-z0-9]/gi, '_');
+            const fileName = `Fiche_Ferwood_${safeClient}_${dateStr}.pdf`;
             const pdfBlob = await generateFerwoodPdfBlob();
             const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
@@ -4158,8 +4136,8 @@
                 // L'utilisateur a annulé le partage : rien à faire
             } else {
                 console.warn('Génération PDF impossible, repli sur le résumé texte :', err);
-                const { ficheNum, client, body } = buildFerwoodEmailText();
-                const subject = `Fiche Ferwood${client ? ' - ' + client : (' N° ' + ficheNum)}`;
+                const { client, body } = buildFerwoodEmailText();
+                const subject = `Fiche Ferwood${client ? ' - ' + client : ''}`;
                 const bodyWithNote = `${body}\n\nNote : le PDF n'a pas pu être généré automatiquement sur cet ordinateur. Utilisez le bouton "GÉNÉRER LE RAPPORT PDF" pour l'enregistrer, puis joignez-le manuellement à cet e-mail.`;
                 showEmailReadyBanner(subject, bodyWithNote, '(à générer via le bouton PDF)');
             }
