@@ -2621,7 +2621,7 @@
     }
 
     async function generateYaskawaPdfBlob() {
-        const docEl = document.querySelector('#yaskawa-view .yaskawa-doc');
+        const docEl = document.getElementById('yaskawaForm');
         const restoreFns = [];
 
         // 1) Remplacer la zone de signature (canvas) par une image figée aux dimensions exactes
@@ -2676,6 +2676,13 @@
             span.style.fontFamily = computed.fontFamily;
             span.style.lineHeight = computed.lineHeight;
             span.style.color = '#000';
+            if (el.type === 'time') {
+                // Les champs heure natifs affichent leur valeur centrée par défaut, mais ça ne se
+                // reflète pas dans une propriété CSS lisible : on le force explicitement.
+                span.style.display = 'block';
+                span.style.width = '100%';
+                span.style.textAlign = 'center';
+            }
             el.replaceWith(span);
             restoreFns.push(() => span.replaceWith(el));
         });
@@ -2703,12 +2710,18 @@
 
         // Cellule "Horaires" : texte vertical dans une cellule à rowspan="5". On ne tourne
         // jamais la cellule elle-même (ça casserait son rowspan et décalerait tout le tableau) :
-        // on enveloppe son texte dans un span interne, et c'est ce span qu'on fait pivoter.
+        // on neutralise d'abord la rotation héritée de sa classe CSS, puis on enveloppe son texte
+        // dans un span interne, et c'est ce span qu'on fait pivoter, bien centré dans la cellule.
         document.querySelectorAll('#yaskawa-view .y-horaires-label').forEach((td) => {
+            const prevStyle = td.getAttribute('style');
             const prevHTML = td.innerHTML;
+            td.style.writingMode = 'horizontal-tb';
+            td.style.transform = 'none';
+            td.style.textAlign = 'center';
+            td.style.verticalAlign = 'middle';
             const text = td.textContent;
             td.innerHTML = `<span style="writing-mode:horizontal-tb; display:inline-block; white-space:nowrap; transform:rotate(-90deg); font-weight:bold;">${text}</span>`;
-            restoreFns.push(() => { td.innerHTML = prevHTML; });
+            restoreFns.push(() => { td.innerHTML = prevHTML; td.setAttribute('style', prevStyle || ''); });
         });
 
         // 5) Masquer les éléments d'interface (boutons "Effacer"...) absents du document final
@@ -2913,7 +2926,7 @@
     }
 
     async function generateGenericPdfBlob() {
-        const docEl = document.querySelector('#generic-view .yaskawa-doc');
+        const docEl = document.getElementById('genericForm');
         const restoreFns = [];
 
         const sigCanvas = document.getElementById('g_signature');
@@ -3348,7 +3361,7 @@
     }
 
     async function generateAtelierPdfBlob() {
-        const docEl = document.querySelector('#atelier-view .yaskawa-doc');
+        const docEl = document.getElementById('atelierForm');
         const restoreFns = [];
 
         // Zones de texte -> blocs de texte simples (n'affichent jamais rien de coupé)
