@@ -81,7 +81,7 @@
         .io-table th { background: var(--bleu-fond); }
         
         .axe-container { border: 1px solid var(--bleu-accent); padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #fdfdfe; border-left: 8px solid var(--jaune-bechameil); position: relative; }
-        .atelier-machine-container { border: 1px solid var(--bleu-accent); padding: 14px 16px; margin-bottom: 16px; border-radius: 6px; background: #fdfdfe; border-left: 6px solid var(--jaune-bechameil); position: relative; }
+        .atelier-machine-container { border: 1px solid var(--bleu-accent); padding: 14px 16px; margin-bottom: 16px; border-radius: 6px; background: #fdfdfe; position: relative; }
         .atelier-machine-title { font-weight: bold; color: var(--bleu-nuit-soft); margin-bottom: 8px; font-size: 1.05em; }
         .axe-title { font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid var(--bleu-fond); padding-bottom: 8px; font-size: 1.1em; color: var(--bleu-nuit-soft); }
         .grid-axe { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -102,6 +102,10 @@
         .cp-photo-block .photo-item { min-height: 110px; }
         .cp-photo-block .photo-wrapper { margin-bottom: 0; }
         .cp-photo-comment { width: 100%; box-sizing: border-box; border: 1px solid var(--bleu-accent); border-radius: 4px; padding: 6px 8px; font-size: 0.85em; font-family: inherit; resize: vertical; }
+        .cp-ouinon { display: flex; gap: 28px; align-items: center; }
+        .cp-ouinon label { display: inline-flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer; white-space: nowrap; }
+        .cp-checkline { display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer; margin-bottom: 8px; }
+        .cp-checkline:last-of-type { margin-bottom: 0; }
 
         .btn-add { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-remove { background: #c0393b; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; }
@@ -113,7 +117,7 @@
             .no-print, #saveMsg, .btn-remove, .btn-add { display: none !important; } 
             .page { box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important; border-top: 10px solid var(--jaune-bechameil) !important; } 
             .axe-container { page-break-inside: avoid; break-inside: avoid; border: 1px solid var(--bleu-accent) !important; border-left: 8px solid var(--jaune-bechameil) !important; background: #fdfdfe !important; }
-            .atelier-machine-container { page-break-inside: avoid; break-inside: avoid; border: 1px solid var(--bleu-accent) !important; border-left: 6px solid var(--jaune-bechameil) !important; background: #fdfdfe !important; }
+            .atelier-machine-container { page-break-inside: avoid; break-inside: avoid; border: 1px solid var(--bleu-accent) !important; background: #fdfdfe !important; }
             .photo-wrapper { page-break-inside: avoid; break-inside: avoid; }
             .cp-photo-block { page-break-inside: avoid; break-inside: avoid; }
             .cp-subhead { background: var(--bleu-fond) !important; page-break-after: avoid; }
@@ -975,46 +979,36 @@
                         <div class="y-content">
                             <table class="y-table">
                                 <colgroup>
-                                    <col style="width:20%;">
-                                    <col style="width:40%;">
-                                    <col style="width:40%;">
+                                    <col style="width:26%;">
+                                    <col style="width:74%;">
                                 </colgroup>
                                 <tr>
                                     <td class="y-label">Date d'intervention</td>
-                                    <td><input type="date" id="at_date"></td>
-                                    <td class="y-label-inline">N° de Devis : <input type="text" id="at_devis"></td>
-                                </tr>
-                                <tr>
-                                    <td class="y-subheader"></td>
-                                    <td class="y-subheader">Adresse d'intervention</td>
-                                    <td class="y-subheader">Adresse de facturation</td>
+                                    <td><input type="date" id="at_date" style="width:160px;"> &nbsp;&nbsp; <span style="font-weight:bold;">N° de Devis :</span> <input type="text" id="at_devis" style="width:160px;"></td>
                                 </tr>
                                 <tr>
                                     <td class="y-label">Société/ Client</td>
                                     <td><input type="text" id="at_client_int" list="clientDatalist"></td>
-                                    <td><input type="text" id="at_client_fact"></td>
                                 </tr>
                                 <tr>
-                                    <td class="y-label" style="vertical-align:top;">Adresse</td>
+                                    <td class="y-label" style="vertical-align:top;">Adresse d'intervention</td>
                                     <td style="vertical-align:top;"><textarea id="at_adresse_int" rows="3"></textarea></td>
-                                    <td style="vertical-align:top;"><textarea id="at_adresse_fact" rows="3"></textarea></td>
                                 </tr>
                                 <tr>
                                     <td class="y-label">Nom du contact</td>
-                                    <td><input type="text" id="at_contact"></td>
-                                    <td class="y-label-inline">Tel : <input type="text" id="at_tel"></td>
+                                    <td><input type="text" id="at_contact"> &nbsp;&nbsp; <span style="font-weight:bold;">Tel :</span> <input type="text" id="at_tel" style="width:160px;"></td>
                                 </tr>
                                 <tr>
                                     <td class="y-label">Adresse email</td>
-                                    <td colspan="2"><input type="email" id="at_email"></td>
+                                    <td><input type="email" id="at_email"></td>
                                 </tr>
                                 <tr>
                                     <td class="y-label" style="vertical-align:top;">Objet</td>
-                                    <td colspan="2" style="vertical-align:top;"><textarea id="at_objet" rows="2" placeholder="Ex: Audit de l'atelier de production"></textarea></td>
+                                    <td style="vertical-align:top;"><textarea id="at_objet" rows="2" placeholder="Ex: Audit de l'atelier de production"></textarea></td>
                                 </tr>
                                 <tr>
                                     <td class="y-label">Technicien(s)</td>
-                                    <td colspan="2"><input type="text" id="at_technicien" list="technicienDatalist"></td>
+                                    <td><input type="text" id="at_technicien" list="technicienDatalist"></td>
                                 </tr>
                             </table>
                         </div>
@@ -3577,8 +3571,10 @@
     ];
 
     function cpOuiNonRadio(prefix, cidx) {
-        return `<label class="y-checkbox-label"><input type="radio" class="y-checkbox" name="${prefix}_${cidx}" id="${prefix}_oui_${cidx}"> Oui</label>
-            &nbsp;&nbsp;<label class="y-checkbox-label"><input type="radio" class="y-checkbox" name="${prefix}_${cidx}" id="${prefix}_non_${cidx}"> Non</label>`;
+        return `<div class="cp-ouinon">
+            <label class="y-checkbox-label">Oui <input type="radio" class="y-checkbox" name="${prefix}_${cidx}" id="${prefix}_oui_${cidx}"></label>
+            <label class="y-checkbox-label">Non <input type="radio" class="y-checkbox" name="${prefix}_${cidx}" id="${prefix}_non_${cidx}"></label>
+        </div>`;
     }
 
     function cpPhotoSlotHtml(key, label, cidx) {
@@ -3608,8 +3604,10 @@
                 <tr>
                     <td class="y-label">Type</td>
                     <td>
-                        <label class="y-checkbox-label"><input type="radio" class="y-checkbox" name="at_cp_type_${cidx}" id="at_cp_type_vis_${cidx}"> Vis</label>
-                        &nbsp;&nbsp;<label class="y-checkbox-label"><input type="radio" class="y-checkbox" name="at_cp_type_${cidx}" id="at_cp_type_piston_${cidx}"> Piston</label>
+                        <div class="cp-ouinon">
+                            <label class="y-checkbox-label">Vis <input type="radio" class="y-checkbox" name="at_cp_type_${cidx}" id="at_cp_type_vis_${cidx}"></label>
+                            <label class="y-checkbox-label">Piston <input type="radio" class="y-checkbox" name="at_cp_type_${cidx}" id="at_cp_type_piston_${cidx}"></label>
+                        </div>
                     </td>
                 </tr>
                 <tr><td class="y-label">Marque</td><td><input type="text" id="at_cp_marque_${cidx}"></td></tr>
@@ -3625,20 +3623,20 @@
                 <colgroup><col style="width:32%;"><col style="width:68%;"></colgroup>
                 <tr><td class="y-label">Assécheur</td><td>${cpOuiNonRadio('at_cp_assecheur', cidx)}</td></tr>
                 <tr><td class="y-label">Filtres réseau</td><td>${cpOuiNonRadio('at_cp_filtres', cidx)}</td></tr>
+                <tr><td class="y-label">Bac de condensats</td><td>${cpOuiNonRadio('at_cp_baccondensats', cidx)}</td></tr>
                 <tr>
-                    <td class="y-label" style="vertical-align:top;">Traitement condensats</td>
+                    <td class="y-label" style="vertical-align:top;">Traitement des condensats</td>
                     <td style="vertical-align:top;">
-                        <div style="margin-bottom:8px;"><span style="font-weight:bold; font-size:0.9em;">Bac de condensats :</span>&nbsp; ${cpOuiNonRadio('at_cp_baccondensats', cidx)}</div>
-                        <label class="y-checkbox-label"><input type="checkbox" class="y-checkbox" id="at_cp_rejetdirect_${cidx}"> Rejet direct après purge</label><br>
-                        <label class="y-checkbox-label"><input type="checkbox" class="y-checkbox" id="at_cp_rejetautre_${cidx}"> Rejet autre (bidon, réseau...)</label>
-                        <input type="text" id="at_cp_rejetautre_comment_${cidx}" placeholder="Précisez" style="width:55%; margin-left:8px;">
+                        <label class="y-checkbox-label cp-checkline">Rejet direct après purge <input type="checkbox" class="y-checkbox" id="at_cp_rejetdirect_${cidx}"></label>
+                        <label class="y-checkbox-label cp-checkline">Rejet autre (bidon, réseau...) <input type="checkbox" class="y-checkbox" id="at_cp_rejetautre_${cidx}"></label>
+                        <input type="text" id="at_cp_rejetautre_comment_${cidx}" placeholder="Précisez" style="width:100%; box-sizing:border-box; margin-top:8px;">
                     </td>
                 </tr>
             </table>
 
             <table class="y-table" style="margin-top:10px;">
                 <colgroup><col style="width:32%;"><col style="width:68%;"></colgroup>
-                <tr><td class="y-label">Contrat de service</td><td><input type="text" id="at_cp_contrat_${cidx}" placeholder="Ex : Oui - Société XXX / Non"></td></tr>
+                <tr><td class="y-label">Pression de service</td><td><input type="text" id="at_cp_pression_${cidx}" placeholder="Ex : 7 bar"></td></tr>
                 <tr><td class="y-label">Fuite d'air — Local compresseur</td><td>${cpOuiNonRadio('at_cp_fuite', cidx)}</td></tr>
             </table>
 
@@ -4010,8 +4008,6 @@
         lines.push(`N° de Devis : ${v('at_devis')}`);
         lines.push(`Société/Client (intervention) : ${v('at_client_int')}`);
         lines.push(`Adresse d'intervention : ${v('at_adresse_int')}`);
-        lines.push(`Société/Client (facturation) : ${v('at_client_fact')}`);
-        lines.push(`Adresse de facturation : ${v('at_adresse_fact')}`);
         lines.push(`Nom du contact : ${v('at_contact')}`);
         lines.push(`Tel : ${v('at_tel')}`);
         lines.push(`Adresse email : ${v('at_email')}`);
@@ -4055,7 +4051,7 @@
             if (c('at_cp_rejetdirect_' + cIdx)) rejets.push('Rejet direct après purge');
             if (c('at_cp_rejetautre_' + cIdx)) rejets.push('Rejet autre : ' + v('at_cp_rejetautre_comment_' + cIdx));
             lines.push(`Traitement des condensats : ${rejets.join(' / ') || '-'}`);
-            lines.push(`Contrat de service : ${v('at_cp_contrat_' + cIdx)}`);
+            lines.push(`Pression de service : ${v('at_cp_pression_' + cIdx)}`);
             lines.push(`Fuite d'air - Local compresseur : ${ouiNon('at_cp_fuite')}`);
             lines.push(`Date dernière intervention : ${v('at_cp_histo_date_' + cIdx)}`);
             lines.push(`Travaux réalisés : ${v('at_cp_histo_travaux_' + cIdx)}`);
@@ -4066,7 +4062,7 @@
         lines.push('SARL BECHAMEIL - 41 rue Lafayette - 58200 COSNE-SUR-LOIRE');
         lines.push('SIRET 830836722 00033 - TVA FR21830836722');
         lines.push('Tél : 07 84 54 84 67 - Mail : contact@bechameil.com - Site http://bechameil.com');
-        const clientName = (v('at_client_int').trim() || v('at_client_fact').trim());
+        const clientName = v('at_client_int').trim();
         return { ficheNum, client: clientName, body: lines.join('\n') };
     }
 
