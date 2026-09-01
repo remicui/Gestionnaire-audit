@@ -4116,11 +4116,9 @@
         const usableW = pageW - margin * 2;
         const usableH = pageH - margin * 2;
         const pxPerMm = canvas.width / usableW;
-        const pageHeightPx = usableH * pxPerMm;
 
-        // Points de coupure : d'abord le repère de saut de page (comme dans le document
-        // d'origine), puis la fin du document. Chaque segment est ensuite lui-même redécoupé
-        // s'il dépasse la hauteur d'une page A4, sans jamais mélanger deux pages logiques.
+        // Points de coupure : le repère de saut de page (comme dans le document d'origine),
+        // puis la fin du document.
         const cutPointsPx = [0];
         if (breakOffsetPx !== null && docWidthBeforeCapture > 0) {
             const breakPx = Math.round(breakOffsetPx * (canvas.width / docWidthBeforeCapture));
@@ -4128,23 +4126,33 @@
         }
         cutPointsPx.push(canvas.height);
 
-        let pdfPageStarted = false;
+        // Chaque page logique (avant/après le repère) est placée sur SA PROPRE page PDF,
+        // jamais répartie sur plusieurs. Si son contenu dépasse légèrement la hauteur d'une
+        // page A4, on la réduit proportionnellement (largeur et hauteur) pour qu'elle tienne
+        // entièrement dessus, plutôt que de déborder sur une page supplémentaire.
         for (let i = 0; i < cutPointsPx.length - 1; i++) {
-            let renderedHeightPx = cutPointsPx[i];
-            const segmentEnd = cutPointsPx[i + 1];
-            while (renderedHeightPx < segmentEnd) {
-                const sliceHeightPx = Math.min(pageHeightPx, segmentEnd - renderedHeightPx);
-                const sliceCanvas = document.createElement('canvas');
-                sliceCanvas.width = canvas.width;
-                sliceCanvas.height = sliceHeightPx;
-                const ctx = sliceCanvas.getContext('2d');
-                ctx.drawImage(canvas, 0, renderedHeightPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
-                if (pdfPageStarted) pdf.addPage();
-                const sliceHeightMm = sliceHeightPx / pxPerMm;
-                pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', margin, margin, usableW, sliceHeightMm);
-                renderedHeightPx += sliceHeightPx;
-                pdfPageStarted = true;
+            const startPx = cutPointsPx[i];
+            const endPx = cutPointsPx[i + 1];
+            const sliceHeightPx = endPx - startPx;
+            if (sliceHeightPx <= 0) continue;
+
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = sliceHeightPx;
+            const ctx = sliceCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, startPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+
+            let imgWmm = usableW;
+            let imgHmm = sliceHeightPx / pxPerMm;
+            if (imgHmm > usableH) {
+                const shrink = usableH / imgHmm;
+                imgHmm = usableH;
+                imgWmm = usableW * shrink;
             }
+            const xOffset = margin + (usableW - imgWmm) / 2;
+
+            if (i > 0) pdf.addPage();
+            pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', xOffset, margin, imgWmm, imgHmm);
         }
 
         return pdf.output('blob');
