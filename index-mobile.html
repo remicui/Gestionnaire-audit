@@ -92,7 +92,17 @@
         .photo-item { border: 2px dashed var(--bleu-accent); min-height: 150px; display: flex; align-items: center; justify-content: center; background: #fafafa; border-radius: 5px; cursor: pointer; }
         .photo-item img { width: 100%; max-height: 500px; object-fit: contain; }
         .photo-wrapper { position: relative; margin-bottom: 20px; }
-        
+
+        /* ---------- FICHE COMPRESSEUR (bloc équipement spécifique de l'audit atelier) ---------- */
+        .atelier-add-select { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1em; font-family: inherit; }
+        .cp-subhead { background: var(--bleu-fond); color: var(--bleu-nuit-soft); font-weight: bold; padding: 7px 12px; margin: 16px 0 8px 0; border-radius: 4px; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; border-left: 4px solid var(--jaune-bechameil); }
+        .cp-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; margin-top: 12px; }
+        .cp-photo-block { display: flex; flex-direction: column; gap: 6px; position: relative; }
+        .cp-photo-label { font-weight: bold; font-size: 0.78em; color: var(--bleu-accent); text-transform: uppercase; letter-spacing: 0.3px; }
+        .cp-photo-block .photo-item { min-height: 110px; }
+        .cp-photo-block .photo-wrapper { margin-bottom: 0; }
+        .cp-photo-comment { width: 100%; box-sizing: border-box; border: 1px solid var(--bleu-accent); border-radius: 4px; padding: 6px 8px; font-size: 0.85em; font-family: inherit; resize: vertical; }
+
         .btn-add { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-remove { background: #c0393b; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; }
         .tech-tooltip { position: absolute; background: #222; color: #fff; padding: 10px 14px; border-radius: 5px; font-size: 12.5px; z-index: 3000; max-width: 280px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); pointer-events: none; display: none; border-left: 5px solid var(--jaune-bechameil); line-height: 1.4; }
@@ -105,6 +115,8 @@
             .axe-container { page-break-inside: avoid; break-inside: avoid; border: 1px solid var(--bleu-accent) !important; border-left: 8px solid var(--jaune-bechameil) !important; background: #fdfdfe !important; }
             .atelier-machine-container { page-break-inside: avoid; break-inside: avoid; border: 1px solid var(--bleu-accent) !important; border-left: 6px solid var(--jaune-bechameil) !important; background: #fdfdfe !important; }
             .photo-wrapper { page-break-inside: avoid; break-inside: avoid; }
+            .cp-photo-block { page-break-inside: avoid; break-inside: avoid; }
+            .cp-subhead { background: var(--bleu-fond) !important; page-break-after: avoid; }
             h2 { background: var(--bleu-nuit-soft) !important; color: var(--jaune-bechameil) !important; page-break-after: avoid; padding: 10px 15px !important; border-radius: 4px !important; }
             .io-table th { background: var(--bleu-fond) !important; }
             input, select, textarea { border: 1px solid #eee !important; background: transparent !important; }
@@ -1014,7 +1026,11 @@
                         <div class="y-content">
                             <div id="atelier-machines-list"></div>
                             <div class="no-print" style="text-align:center; margin-top:10px;">
-                                <button type="button" class="btn-add" onclick="addAtelierMachine();">➕ AJOUTER UNE MACHINE</button>
+                                <select id="atelierAddSelect" class="atelier-add-select" onchange="handleAtelierAddSelect(this);">
+                                    <option value="" selected disabled>➕ AJOUTER UN ÉQUIPEMENT</option>
+                                    <option value="machine">➕ Machine (générique)</option>
+                                    <option value="compresseur">➕ Compresseur</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -3472,11 +3488,19 @@
 
     // Un bloc "machine" répétable, sur le même principe que les axes moteur de l'audit
     // automatisme : chaque machine ajoutée reprend tous les champs + sa propre galerie photo.
+    function handleAtelierAddSelect(sel) {
+        const val = sel.value;
+        if (val === 'machine') addAtelierMachine();
+        else if (val === 'compresseur') addAtelierCompresseur();
+        sel.value = '';
+        saveAtelierReport();
+    }
+
     function addAtelierMachine() {
         const list = document.getElementById('atelier-machines-list');
-        const idx = list.children.length;
+        const idx = list.querySelectorAll('.atelier-type-machine').length;
         const div = document.createElement('div');
-        div.className = 'atelier-machine-container';
+        div.className = 'atelier-machine-container atelier-type-machine';
         div.innerHTML = `<button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveAtelierReport();" style="position:absolute; top:12px; right:12px;">❌</button>
             <div class="atelier-machine-title">MACHINE N°${idx + 1}</div>
             <table class="y-table">
@@ -3531,6 +3555,216 @@
                 <button type="button" class="btn-add" onclick="addAtelierPhoto(null, '', ${idx});">➕ AJOUTER UNE PHOTO</button>
             </div>`;
         list.appendChild(div);
+    }
+
+    // ---------- BLOC ÉQUIPEMENT « COMPRESSEUR » (fiche détaillée dédiée) ----------
+    const COMPRESSEUR_PHOTO_SLOTS = [
+        { key: 'ensemble',            label: "Vue d'ensemble" },
+        { key: 'dos',                 label: 'Vue de dos' },
+        { key: 'cote',                label: 'Vue de côté' },
+        { key: 'plaque_machine',      label: 'Plaque signalétique machine' },
+        { key: 'compteur_horaire',    label: 'Compteur horaire' },
+        { key: 'cuve_ensemble',       label: "Cuve — vue d'ensemble" },
+        { key: 'cuve_plaque',         label: 'Cuve — plaque signalétique' },
+        { key: 'assecheur_ensemble',  label: "Assécheur — vue d'ensemble" },
+        { key: 'assecheur_plaque',    label: 'Assécheur — plaque signalétique' },
+        { key: 'filtres_ensemble',    label: "Filtres réseau — vue d'ensemble" },
+        { key: 'filtres_references',  label: 'Filtres réseau (références)' },
+        { key: 'condensats_ensemble', label: "Traitement condensats — vue d'ensemble" },
+        { key: 'condensats_plaque',   label: 'Traitement condensats — plaque signalétique' },
+        { key: 'purge_ensemble',      label: "Purge — vue d'ensemble" },
+        { key: 'purge',               label: 'Purge' }
+    ];
+
+    function cpOuiNonRadio(prefix, cidx) {
+        return `<label class="y-checkbox-label"><input type="radio" class="y-checkbox" name="${prefix}_${cidx}" id="${prefix}_oui_${cidx}"> Oui</label>
+            &nbsp;&nbsp;<label class="y-checkbox-label"><input type="radio" class="y-checkbox" name="${prefix}_${cidx}" id="${prefix}_non_${cidx}"> Non</label>`;
+    }
+
+    function cpPhotoSlotHtml(key, label, cidx) {
+        return `<div class="cp-photo-block">
+                <div class="cp-photo-label">${label}</div>
+                <div class="photo-wrapper">
+                    <div class="photo-item" onclick="document.getElementById('cpfile_${key}_${cidx}').click()">
+                        <span id="cptxt_${key}_${cidx}">📸 Cliquez pour ajouter</span>
+                        <img id="cpimg_${key}_${cidx}" style="display:none">
+                        <input type="file" id="cpfile_${key}_${cidx}" accept="image/*" style="display:none" onchange="previewCompresseurPhoto(this, '${key}', ${cidx})">
+                    </div>
+                </div>
+                <textarea id="at_cp_comment_${key}_${cidx}" rows="2" class="cp-photo-comment" placeholder="Commentaire..."></textarea>
+            </div>`;
+    }
+
+    function addAtelierCompresseur() {
+        const list = document.getElementById('atelier-machines-list');
+        const cidx = list.querySelectorAll('.atelier-type-compresseur').length;
+        const div = document.createElement('div');
+        div.className = 'atelier-machine-container atelier-type-compresseur';
+        div.dataset.cidx = cidx;
+        div.innerHTML = `<button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveAtelierReport();" style="position:absolute; top:12px; right:12px;">❌</button>
+            <div class="atelier-machine-title">🗜️ COMPRESSEUR N°${cidx + 1}</div>
+            <table class="y-table">
+                <colgroup><col style="width:32%;"><col style="width:68%;"></colgroup>
+                <tr>
+                    <td class="y-label">Type</td>
+                    <td>
+                        <label class="y-checkbox-label"><input type="radio" class="y-checkbox" name="at_cp_type_${cidx}" id="at_cp_type_vis_${cidx}"> Vis</label>
+                        &nbsp;&nbsp;<label class="y-checkbox-label"><input type="radio" class="y-checkbox" name="at_cp_type_${cidx}" id="at_cp_type_piston_${cidx}"> Piston</label>
+                    </td>
+                </tr>
+                <tr><td class="y-label">Marque</td><td><input type="text" id="at_cp_marque_${cidx}"></td></tr>
+                <tr><td class="y-label">Référence</td><td><input type="text" id="at_cp_reference_${cidx}"></td></tr>
+                <tr><td class="y-label">Utilisation</td><td><input type="text" id="at_cp_utilisation_${cidx}"></td></tr>
+                <tr><td class="y-label">Nombre d'heures (compteur)</td><td><input type="text" id="at_cp_heures_${cidx}" placeholder="Ex : 12450 h"></td></tr>
+                <tr><td class="y-label">Environnement du compresseur</td><td><input type="text" id="at_cp_environnement_${cidx}" placeholder="Ex : local technique ventilé, extérieur..."></td></tr>
+                <tr><td class="y-label">Cuve</td><td>${cpOuiNonRadio('at_cp_cuve', cidx)}</td></tr>
+            </table>
+
+            <div class="cp-subhead">Traitement de l'air</div>
+            <table class="y-table">
+                <colgroup><col style="width:32%;"><col style="width:68%;"></colgroup>
+                <tr><td class="y-label">Assécheur</td><td>${cpOuiNonRadio('at_cp_assecheur', cidx)}</td></tr>
+                <tr><td class="y-label">Filtres réseau</td><td>${cpOuiNonRadio('at_cp_filtres', cidx)}</td></tr>
+                <tr>
+                    <td class="y-label" style="vertical-align:top;">Traitement condensats</td>
+                    <td style="vertical-align:top;">
+                        <div style="margin-bottom:8px;"><span style="font-weight:bold; font-size:0.9em;">Bac de condensats :</span>&nbsp; ${cpOuiNonRadio('at_cp_baccondensats', cidx)}</div>
+                        <label class="y-checkbox-label"><input type="checkbox" class="y-checkbox" id="at_cp_rejetdirect_${cidx}"> Rejet direct après purge</label><br>
+                        <label class="y-checkbox-label"><input type="checkbox" class="y-checkbox" id="at_cp_rejetautre_${cidx}"> Rejet autre (bidon, réseau...)</label>
+                        <input type="text" id="at_cp_rejetautre_comment_${cidx}" placeholder="Précisez" style="width:55%; margin-left:8px;">
+                    </td>
+                </tr>
+            </table>
+
+            <table class="y-table" style="margin-top:10px;">
+                <colgroup><col style="width:32%;"><col style="width:68%;"></colgroup>
+                <tr><td class="y-label">Contrat de service</td><td><input type="text" id="at_cp_contrat_${cidx}" placeholder="Ex : Oui - Société XXX / Non"></td></tr>
+                <tr><td class="y-label">Fuite d'air — Local compresseur</td><td>${cpOuiNonRadio('at_cp_fuite', cidx)}</td></tr>
+            </table>
+
+            <div class="cp-subhead">Historique client</div>
+            <table class="y-table">
+                <colgroup><col style="width:32%;"><col style="width:68%;"></colgroup>
+                <tr><td class="y-label">Date dernière intervention</td><td><input type="date" id="at_cp_histo_date_${cidx}"></td></tr>
+                <tr><td class="y-label" style="vertical-align:top;">Travaux réalisés</td><td><textarea id="at_cp_histo_travaux_${cidx}" rows="3"></textarea></td></tr>
+                <tr><td class="y-label">Carnet d'entretien</td><td>${cpOuiNonRadio('at_cp_carnet', cidx)}</td></tr>
+            </table>
+
+            <table class="y-table" style="margin-top:10px;">
+                <colgroup><col style="width:32%;"><col style="width:68%;"></colgroup>
+                <tr><td class="y-label" style="vertical-align:top;">Commentaires / Remarques</td><td><textarea id="at_cp_remarques_${cidx}" rows="4"></textarea></td></tr>
+            </table>
+
+            <div class="y-label" style="margin-top:16px;">Photos</div>
+            <div class="cp-photo-grid" id="cpPhotoFixed_${cidx}">
+                ${COMPRESSEUR_PHOTO_SLOTS.map(s => cpPhotoSlotHtml(s.key, s.label, cidx)).join('')}
+            </div>
+            <div class="cp-photo-grid" id="cpPhotoAutres_${cidx}"></div>
+            <div class="no-print" style="text-align:center; margin-top:10px;">
+                <button type="button" class="btn-add" onclick="addCompresseurAutrePhoto(${cidx});">➕ AJOUTER UNE PHOTO</button>
+            </div>`;
+        list.appendChild(div);
+        addCompresseurAutrePhoto(cidx);
+    }
+
+    let cpAutresCounter = 0;
+    function addCompresseurAutrePhoto(cidx, src = null, cloudUrl = '') {
+        cpAutresCounter++;
+        const localId = cpAutresCounter;
+        const grid = document.getElementById('cpPhotoAutres_' + cidx);
+        if (!grid) return;
+        const div = document.createElement('div');
+        div.className = 'cp-photo-block';
+        div.innerHTML = `<div class="cp-photo-label">Photo autres</div>
+            <div class="photo-wrapper">
+                <div class="photo-item" onclick="document.getElementById('cpauto_file_${localId}').click()">
+                    <span id="cpauto_txt_${localId}" style="${src ? 'display:none' : ''}">📸 Cliquez pour ajouter</span>
+                    <img id="cpauto_img_${localId}" src="${src || ''}" data-cloud-url="${cloudUrl || ''}" style="${src ? 'display:block' : 'display:none'}">
+                    <input type="file" id="cpauto_file_${localId}" accept="image/*" style="display:none" onchange="previewCompresseurAutrePhoto(this, ${localId})">
+                </div>
+                <button type="button" class="btn-remove no-print" onclick="this.closest('.cp-photo-block').remove(); saveAtelierReport();" style="position:absolute; top:8px; right:8px;">❌</button>
+            </div>
+            <textarea id="at_cp_autre_comment_${localId}" rows="2" class="cp-photo-comment" placeholder="Commentaire..."></textarea>`;
+        grid.appendChild(div);
+    }
+
+    function previewCompresseurPhoto(input, key, cidx) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+                    const imgEl = document.getElementById('cpimg_' + key + '_' + cidx);
+                    imgEl.src = compressedData;
+                    imgEl.dataset.cloudUrl = '';
+                    imgEl.style.display = 'block';
+                    const txtEl = document.getElementById('cptxt_' + key + '_' + cidx);
+                    if (txtEl) txtEl.style.display = 'none';
+                    saveAtelierReport();
+
+                    const ficheId = document.getElementById('currentAtelierId').value;
+                    if (ficheId) {
+                        uploadPhotoToSupabase(compressedData, ficheId, 'cp_' + key + '_' + cidx).then((cloudUrl) => {
+                            imgEl.dataset.cloudUrl = cloudUrl;
+                            if (document.getElementById('currentAtelierId').value === ficheId) {
+                                saveAtelierReport();
+                            }
+                        }).catch((err) => {
+                            console.warn('Upload photo (Supabase) impossible, elle reste locale uniquement :', err.message || err);
+                        });
+                    }
+                };
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function previewCompresseurAutrePhoto(input, localId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+                    const prevEl = document.getElementById('cpauto_img_' + localId);
+                    prevEl.src = compressedData;
+                    prevEl.dataset.cloudUrl = '';
+                    prevEl.style.display = 'block';
+                    document.getElementById('cpauto_txt_' + localId).style.display = 'none';
+                    saveAtelierReport();
+
+                    const ficheId = document.getElementById('currentAtelierId').value;
+                    if (ficheId) {
+                        uploadPhotoToSupabase(compressedData, ficheId, 'cpauto_' + localId).then((cloudUrl) => {
+                            prevEl.dataset.cloudUrl = cloudUrl;
+                            if (document.getElementById('currentAtelierId').value === ficheId) {
+                                saveAtelierReport();
+                            }
+                        }).catch((err) => {
+                            console.warn('Upload photo (Supabase) impossible, elle reste locale uniquement :', err.message || err);
+                        });
+                    }
+                };
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
     }
 
     function addAtelierPhoto(src = null, cloudUrl = '', machineIdx = 0) {
@@ -3597,6 +3831,7 @@
         document.getElementById('at_ficheNum').value = '…';
         document.getElementById('atelier-machines-list').innerHTML = '';
         atelierPhotoCounter = 0;
+        cpAutresCounter = 0;
         addAtelierMachine();
         renderClientSuggestion('', 'at_clientHistoryAlert', null);
         showView('atelier-view');
@@ -3610,9 +3845,11 @@
 
     function saveAtelierReport() {
         const id = document.getElementById('currentAtelierId').value; if (!id) return;
-        const machineCount = document.querySelectorAll('#atelier-machines-list .atelier-machine-container').length;
+        const machineCount = document.querySelectorAll('#atelier-machines-list .atelier-type-machine').length;
+        const compresseurCount = document.querySelectorAll('#atelier-machines-list .atelier-type-compresseur').length;
         const photosByMachine = [];
         const photoCloudUrlsByMachine = [];
+        const compresseurPhotos = [];
         try {
             for (let m = 0; m < machineCount; m++) {
                 const mPhotos = [];
@@ -3634,20 +3871,48 @@
                 photosByMachine.push(mPhotos);
                 photoCloudUrlsByMachine.push(mCloudUrls);
             }
+            for (let c = 0; c < compresseurCount; c++) {
+                const fixed = {};
+                COMPRESSEUR_PHOTO_SLOTS.forEach(s => {
+                    const img = document.getElementById('cpimg_' + s.key + '_' + c);
+                    if (!img) return;
+                    const rawSrc = img.getAttribute('src');
+                    if (!rawSrc) return;
+                    const cloudUrl = img.dataset.cloudUrl || '';
+                    if (rawSrc.startsWith('data:')) {
+                        fixed[s.key] = { src: cloudUrl || rawSrc, cloudUrl: cloudUrl };
+                    } else if (rawSrc.startsWith('http')) {
+                        fixed[s.key] = { src: '', cloudUrl: rawSrc };
+                    }
+                });
+                const autres = [];
+                document.querySelectorAll('#cpPhotoAutres_' + c + ' .photo-wrapper img').forEach(img => {
+                    const rawSrc = img.getAttribute('src');
+                    if (!rawSrc) return;
+                    const cloudUrl = img.dataset.cloudUrl || '';
+                    if (rawSrc.startsWith('data:')) autres.push({ src: cloudUrl || rawSrc, cloudUrl: cloudUrl });
+                    else if (rawSrc.startsWith('http')) autres.push({ src: '', cloudUrl: rawSrc });
+                });
+                compresseurPhotos.push({ fixed: fixed, autres: autres });
+            }
         } catch (err) {
             console.warn('Erreur lors de la collecte des photos, la fiche sera sauvegardée sans elles :', err);
         }
         const firstMachine = document.getElementById('at_machine_designation_0');
+        const firstCompMarque = document.getElementById('at_cp_marque_0');
+        const autoName = (firstMachine && firstMachine.value) ? firstMachine.value : ((firstCompMarque && firstCompMarque.value) ? ('Compresseur ' + firstCompMarque.value) : '');
         const data = {
             id: id, type: 'AUDIT ATELIER MACHINE', timestamp: Date.now(),
             client: document.getElementById('at_client_int').value || "Société Inconnue",
-            machine: (firstMachine && firstMachine.value) || ('Fiche N° ' + (document.getElementById('at_ficheNum').value || id)),
+            machine: autoName || ('Fiche N° ' + (document.getElementById('at_ficheNum').value || id)),
             technicien: (document.getElementById('at_technicien').value || '').trim(),
-            status: computeFicheStatus(null, document.getElementById('at_client_int').value, firstMachine ? firstMachine.value : ''),
+            status: computeFicheStatus(null, document.getElementById('at_client_int').value, autoName),
             machineCount: machineCount,
+            compresseurCount: compresseurCount,
             inputs: Array.from(document.querySelectorAll('#atelierForm input:not([type="file"]), #atelierForm textarea')).map(i => ({ id: i.id, val: (i.type === 'checkbox' || i.type === 'radio') ? i.checked : i.value })),
             photosByMachine: photosByMachine,
-            photoCloudUrlsByMachine: photoCloudUrlsByMachine
+            photoCloudUrlsByMachine: photoCloudUrlsByMachine,
+            compresseurPhotos: compresseurPhotos
         };
         try {
             localStorage.setItem(id, JSON.stringify(data));
@@ -3673,7 +3938,9 @@
         document.getElementById('currentAtelierId').value = id;
         document.getElementById('atelier-machines-list').innerHTML = '';
         atelierPhotoCounter = 0;
-        const machineCount = Math.max(data.machineCount || (data.photosByMachine ? data.photosByMachine.length : 1), 1);
+        cpAutresCounter = 0;
+        const machineCount = (typeof data.machineCount === 'number') ? data.machineCount : Math.max(data.photosByMachine ? data.photosByMachine.length : 1, 1);
+        const compresseurCount = data.compresseurCount || 0;
         for (let m = 0; m < machineCount; m++) addAtelierMachine();
         if (data.photosByMachine) {
             data.photosByMachine.forEach((photos, m) => {
@@ -3681,6 +3948,36 @@
                     const cloudUrl = (pSrc && pSrc.startsWith('http')) ? pSrc : ((data.photoCloudUrlsByMachine && data.photoCloudUrlsByMachine[m] && data.photoCloudUrlsByMachine[m][idx]) || '');
                     addAtelierPhoto(pSrc, cloudUrl, m);
                 });
+            });
+        }
+        for (let c = 0; c < compresseurCount; c++) addAtelierCompresseur();
+        if (data.compresseurPhotos) {
+            data.compresseurPhotos.forEach((cp, c) => {
+                if (cp.fixed) {
+                    Object.keys(cp.fixed).forEach(key => {
+                        const info = cp.fixed[key];
+                        const src = info.src || info.cloudUrl;
+                        if (!src) return;
+                        const imgEl = document.getElementById('cpimg_' + key + '_' + c);
+                        const txtEl = document.getElementById('cptxt_' + key + '_' + c);
+                        if (imgEl) {
+                            imgEl.src = src;
+                            imgEl.dataset.cloudUrl = info.cloudUrl || '';
+                            imgEl.style.display = 'block';
+                            if (txtEl) txtEl.style.display = 'none';
+                        }
+                    });
+                }
+                const grid = document.getElementById('cpPhotoAutres_' + c);
+                if (grid) grid.innerHTML = '';
+                if (cp.autres && cp.autres.length) {
+                    cp.autres.forEach(a => {
+                        const cloudUrl = (a.src && a.src.startsWith('http')) ? a.src : (a.cloudUrl || '');
+                        addCompresseurAutrePhoto(c, a.src, cloudUrl);
+                    });
+                } else {
+                    addCompresseurAutrePhoto(c);
+                }
             });
         }
         data.inputs.forEach(item => { const el = document.getElementById(item.id); if (el) { if (el.type === 'checkbox' || el.type === 'radio') el.checked = item.val; else el.value = item.val; } });
@@ -3721,7 +4018,7 @@
         lines.push(`Objet : ${v('at_objet')}`);
         lines.push(`Technicien(s) : ${v('at_technicien')}`);
         lines.push('');
-        const machineCount = document.querySelectorAll('#atelier-machines-list .atelier-machine-container').length;
+        const machineCount = document.querySelectorAll('#atelier-machines-list .atelier-type-machine').length;
         for (let m = 0; m < machineCount; m++) {
             lines.push(`--- MACHINE N°${m + 1} ---`);
             lines.push(`Désignation : ${v('at_machine_designation_' + m)}`);
@@ -3737,6 +4034,33 @@
             lines.push(`État général : ${etats.join(', ') || '-'}`);
             lines.push(`Anomalies observées / points de vigilance : ${v('at_anomalies_' + m)}`);
             lines.push(`Recommandations : ${v('at_recommandations_' + m)}`);
+            lines.push('');
+        }
+        const compresseurCount = document.querySelectorAll('#atelier-machines-list .atelier-type-compresseur').length;
+        for (let cIdx = 0; cIdx < compresseurCount; cIdx++) {
+            const type = c('at_cp_type_vis_' + cIdx) ? 'Vis' : (c('at_cp_type_piston_' + cIdx) ? 'Piston' : '-');
+            const ouiNon = (prefix) => c(prefix + '_oui_' + cIdx) ? 'Oui' : (c(prefix + '_non_' + cIdx) ? 'Non' : '-');
+            lines.push(`--- COMPRESSEUR N°${cIdx + 1} ---`);
+            lines.push(`Type : ${type}`);
+            lines.push(`Marque : ${v('at_cp_marque_' + cIdx)}`);
+            lines.push(`Référence : ${v('at_cp_reference_' + cIdx)}`);
+            lines.push(`Utilisation : ${v('at_cp_utilisation_' + cIdx)}`);
+            lines.push(`Nombre d'heures (compteur) : ${v('at_cp_heures_' + cIdx)}`);
+            lines.push(`Environnement du compresseur : ${v('at_cp_environnement_' + cIdx)}`);
+            lines.push(`Cuve : ${ouiNon('at_cp_cuve')}`);
+            lines.push(`Assécheur : ${ouiNon('at_cp_assecheur')}`);
+            lines.push(`Filtres réseau : ${ouiNon('at_cp_filtres')}`);
+            lines.push(`Bac de condensats : ${ouiNon('at_cp_baccondensats')}`);
+            const rejets = [];
+            if (c('at_cp_rejetdirect_' + cIdx)) rejets.push('Rejet direct après purge');
+            if (c('at_cp_rejetautre_' + cIdx)) rejets.push('Rejet autre : ' + v('at_cp_rejetautre_comment_' + cIdx));
+            lines.push(`Traitement des condensats : ${rejets.join(' / ') || '-'}`);
+            lines.push(`Contrat de service : ${v('at_cp_contrat_' + cIdx)}`);
+            lines.push(`Fuite d'air - Local compresseur : ${ouiNon('at_cp_fuite')}`);
+            lines.push(`Date dernière intervention : ${v('at_cp_histo_date_' + cIdx)}`);
+            lines.push(`Travaux réalisés : ${v('at_cp_histo_travaux_' + cIdx)}`);
+            lines.push(`Carnet d'entretien : ${ouiNon('at_cp_carnet')}`);
+            lines.push(`Commentaires / Remarques : ${v('at_cp_remarques_' + cIdx)}`);
             lines.push('');
         }
         lines.push('SARL BECHAMEIL - 41 rue Lafayette - 58200 COSNE-SUR-LOIRE');
@@ -3771,7 +4095,7 @@
         });
 
         // Champs à une ligne -> texte simple, dates reformatées en JJ/MM/AAAA
-        document.querySelectorAll('#atelier-view .y-table input:not([type="checkbox"]), #atelier-view .y-visa-nom-input').forEach((el) => {
+        document.querySelectorAll('#atelier-view .y-table input:not([type="checkbox"]):not([type="radio"]), #atelier-view .y-visa-nom-input').forEach((el) => {
             let displayValue = el.value || '';
             if (el.type === 'date' && el.value) {
                 const [y, m, d] = el.value.split('-');
