@@ -4073,6 +4073,18 @@
         const docEl = document.getElementById('ferwoodForm');
         const restoreFns = [];
 
+        // Petit ajustement d'espacement (marges/en-têtes uniquement, jamais les cellules
+        // des tableaux ni la taille du texte) pour que la page 2 tienne dans une page A4,
+        // sans changer la taille du tableau par rapport à l'édition.
+        const spacingStyle = document.createElement('style');
+        spacingStyle.id = 'fw-pdf-spacing-style';
+        spacingStyle.textContent = `
+            #ferwood-view .fw-signatures { margin-top: 4px !important; }
+            #ferwood-view .fw-section-header { padding: 3px 10px !important; }
+        `;
+        document.head.appendChild(spacingStyle);
+        restoreFns.push(() => spacingStyle.remove());
+
         // Signatures -> images figées
         ['fx_signature_tech', 'fx_signature_client'].forEach((canvasId) => {
             const sigCanvas = document.getElementById(canvasId);
@@ -4108,7 +4120,9 @@
             restoreFns.push(() => div.replaceWith(el));
         });
 
-        // Champs à une seule ligne (dates, texte...) -> texte simple, plus fiable à la capture
+        // Champs à une seule ligne (dates, texte...) -> texte simple, plus fiable à la capture,
+        // mais en conservant exactement la même hauteur/largeur qu'à l'écran (même si le champ
+        // est vide), pour que le tableau garde la taille qu'il a pendant l'édition.
         document.querySelectorAll('#ferwood-view .fw-table input:not([type="checkbox"])').forEach((el) => {
             let displayValue = el.value || '';
             if (el.type === 'date' && el.value) {
@@ -4118,6 +4132,13 @@
             const computed = window.getComputedStyle(el);
             const span = document.createElement('span');
             span.textContent = displayValue;
+            span.style.display = 'block';
+            span.style.width = '100%';
+            span.style.boxSizing = 'border-box';
+            span.style.minHeight = computed.height;
+            span.style.padding = computed.padding;
+            span.style.whiteSpace = 'pre-wrap';
+            span.style.wordBreak = 'break-word';
             span.style.fontSize = computed.fontSize;
             span.style.fontFamily = computed.fontFamily;
             span.style.fontWeight = 'bold';
