@@ -240,6 +240,21 @@
             #ferwood-view .fw-table tr { page-break-inside: avoid !important; break-inside: avoid !important; }
             #ferwood-view .fw-signatures { page-break-inside: avoid !important; break-inside: avoid !important; }
 
+            /* Légère compaction pour que chacune des deux pages logiques (avant/après
+               .fw-page-break) tienne dans une page A4 imprimée, sans redimensionner tout
+               le document ni changer la mise en page à l'écran. */
+            #ferwood-view .fw-header { padding: 6px 14px 4px 14px !important; }
+            #ferwood-view .fw-logo { max-height: 40px !important; }
+            #ferwood-view .fw-company-info { font-size: 0.62em !important; line-height: 1.3 !important; }
+            #ferwood-view .fw-table td { padding: 3px 8px !important; }
+            #ferwood-view .fw-section-header { padding: 3px 8px !important; font-size: 0.8em !important; }
+            #ferwood-view .fw-subheader { padding: 2px 4px !important; }
+            #ferwood-view .fw-semaine-table td, #ferwood-view .fw-attente-table td { padding: 1.5px 4px !important; }
+            #ferwood-view .fw-signatures { margin-top: 8px !important; }
+
+            /* Le badge de statut de synchronisation ne doit jamais apparaître sur le document imprimé. */
+            #syncStatusBadge { display: none !important; }
+
             /* Supprimer les cellules d'en-tête vides qui créent des lignes/cases superflues absentes du PDF d'origine */
             #yaskawa-view .y-subheader:empty, #generic-view .y-subheader:empty, #atelier-view .y-subheader:empty {
                 border-top: none !important;
