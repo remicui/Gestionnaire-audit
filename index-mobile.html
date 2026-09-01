@@ -2649,7 +2649,7 @@
         div.innerHTML = `<div class="photo-item" id="p_item_${photoCounter}" onclick="document.getElementById('img_${photoCounter}').click()">
             <span id="txt_${photoCounter}" style="${src ? 'display:none' : ''}">📸 Cliquez pour ajouter</span>
             <img id="prev_${photoCounter}" src="${src || ''}" data-cloud-url="${cloudUrl || ''}" style="${src ? 'display:block' : 'display:none'}">
-            <input type="file" id="img_${photoCounter}" accept="image/*" style="display:none" onchange="previewImg(this, ${photoCounter})">
+            <input type="file" id="img_${photoCounter}" accept="image/*" capture="environment" style="display:none" onchange="previewImg(this, ${photoCounter})">
         </div><button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveCurrentReport();" style="position:absolute; top:10px; right:10px;">❌</button>`;
         grid.appendChild(div);
     }
@@ -3584,7 +3584,7 @@
                     <div class="photo-item" onclick="document.getElementById('cpfile_${key}_${cidx}').click()">
                         <span id="cptxt_${key}_${cidx}">📸 Cliquez pour ajouter</span>
                         <img id="cpimg_${key}_${cidx}" style="display:none">
-                        <input type="file" id="cpfile_${key}_${cidx}" accept="image/*" style="display:none" onchange="previewCompresseurPhoto(this, '${key}', ${cidx})">
+                        <input type="file" id="cpfile_${key}_${cidx}" accept="image/*" capture="environment" style="display:none" onchange="previewCompresseurPhoto(this, '${key}', ${cidx})">
                     </div>
                 </div>
                 <textarea id="at_cp_comment_${key}_${cidx}" rows="2" class="cp-photo-comment" placeholder="Commentaire..."></textarea>
@@ -3678,7 +3678,7 @@
                 <div class="photo-item" onclick="document.getElementById('cpauto_file_${localId}').click()">
                     <span id="cpauto_txt_${localId}" style="${src ? 'display:none' : ''}">📸 Cliquez pour ajouter</span>
                     <img id="cpauto_img_${localId}" src="${src || ''}" data-cloud-url="${cloudUrl || ''}" style="${src ? 'display:block' : 'display:none'}">
-                    <input type="file" id="cpauto_file_${localId}" accept="image/*" style="display:none" onchange="previewCompresseurAutrePhoto(this, ${localId})">
+                    <input type="file" id="cpauto_file_${localId}" accept="image/*" capture="environment" style="display:none" onchange="previewCompresseurAutrePhoto(this, ${localId})">
                 </div>
                 <button type="button" class="btn-remove no-print" onclick="this.closest('.cp-photo-block').remove(); saveAtelierReport();" style="position:absolute; top:8px; right:8px;">❌</button>
             </div>
@@ -3775,7 +3775,7 @@
         div.innerHTML = `<div class="photo-item" id="atp_item_${localId}" onclick="document.getElementById('atp_img_${localId}').click()">
             <span id="atp_txt_${localId}" style="${src ? 'display:none' : ''}">📸 Cliquez pour ajouter</span>
             <img id="atp_prev_${localId}" src="${src || ''}" data-cloud-url="${cloudUrl || ''}" style="${src ? 'display:block' : 'display:none'}">
-            <input type="file" id="atp_img_${localId}" accept="image/*" style="display:none" onchange="previewAtelierImg(this, ${localId})">
+            <input type="file" id="atp_img_${localId}" accept="image/*" capture="environment" style="display:none" onchange="previewAtelierImg(this, ${localId})">
         </div><button type="button" class="btn-remove no-print" onclick="this.parentElement.remove(); saveAtelierReport();" style="position:absolute; top:10px; right:10px;">❌</button>`;
         grid.appendChild(div);
     }
