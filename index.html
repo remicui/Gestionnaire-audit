@@ -4009,24 +4009,6 @@
         const docEl = document.getElementById('ferwoodForm');
         const restoreFns = [];
 
-        // Applique en direct (pas seulement en @media print) la même compaction que
-        // celle utilisée pour l'impression, afin que la capture pour l'e-mail respecte
-        // exactement la même hauteur de page et le même point de coupure.
-        const compactionStyle = document.createElement('style');
-        compactionStyle.id = 'fw-pdf-compaction-style';
-        compactionStyle.textContent = `
-            #ferwood-view .fw-header { padding: 6px 14px 4px 14px !important; }
-            #ferwood-view .fw-logo { max-height: 40px !important; }
-            #ferwood-view .fw-company-info { font-size: 0.62em !important; line-height: 1.3 !important; }
-            #ferwood-view .fw-table td { padding: 3px 8px !important; }
-            #ferwood-view .fw-section-header { padding: 3px 8px !important; font-size: 0.8em !important; }
-            #ferwood-view .fw-subheader { padding: 2px 4px !important; }
-            #ferwood-view .fw-semaine-table td, #ferwood-view .fw-attente-table td { padding: 1.5px 4px !important; }
-            #ferwood-view .fw-signatures { margin-top: 8px !important; }
-        `;
-        document.head.appendChild(compactionStyle);
-        restoreFns.push(() => compactionStyle.remove());
-
         // Signatures -> images figées
         ['fx_signature_tech', 'fx_signature_client'].forEach((canvasId) => {
             const sigCanvas = document.getElementById(canvasId);
